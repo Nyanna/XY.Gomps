@@ -1,7 +1,7 @@
 package net.xy.gps.render;
 
 import net.xy.gps.data.IDataObject;
-import net.xy.gps.type.Rectangle;
+import net.xy.gps.render.perspective.Action2DView.ActionListener;
 
 /**
  * specifies typicl layer management functionalities
@@ -24,10 +24,15 @@ public interface ILayer {
     public void clear();
 
     /**
-     * get all appropriated draw action for a certain boundary
+     * adds an listener that is called on draw events
      * 
      * @param view
      * @return
      */
-    public Object[] getDrawActions(Rectangle view);
+    public void setListener(final ActionListener listener);
+
+    /**
+     * causes an redraw of all actual data
+     */
+    public void update();
 }

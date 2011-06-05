@@ -14,6 +14,7 @@ public interface IDrawAction {
     public static final int ACTION_POINT = 0;
     public static final int ACTION_WAY = 1;
     public static final int ACTION_AREA = 2;
+    public static final int ACTION_TEXT = 3;
 
     /**
      * returns type constant of this action

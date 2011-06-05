@@ -9,11 +9,19 @@ import net.xy.gps.type.Point;
  * 
  */
 public class PoiData implements IDataObject {
+    private static final long serialVersionUID = 683804146614402551L;
+
     /**
      * stores position
      */
-    private final Point position;
-    public final String label;
+    private Point position;
+    public String label;
+
+    /**
+     * serialization constructor
+     */
+    public PoiData() {
+    }
 
     /**
      * default constructor

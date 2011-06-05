@@ -1,40 +1,40 @@
 package net.xy.gps.type;
 
+import java.io.Serializable;
+
 /**
  * dimension object
  * 
  * @author xyan
  * 
  */
-public class Dimension {
+public class Dimension implements Serializable {
+    private static final long serialVersionUID = 6778841508229080375L;
+
     /**
      * stores width
      */
-    public final double width;
+    public double width;
 
     /**
      * stores height
      */
-    public final double height;
+    public double height;
 
     /**
      * stores depth
      */
-    public final double depth;
+    public double depth;
 
     /**
      * stores z position
      */
-    public final double z;
+    public double z;
 
     /**
      * null constructor
      */
     public Dimension() {
-        width = 0;
-        height = 0;
-        depth = 0;
-        z = 0;
     }
 
     /**
@@ -61,5 +61,17 @@ public class Dimension {
         this.height = height;
         depth = 0;
         z = 0;
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (!(obj instanceof Dimension)) {
+            return false;
+        }
+        final Dimension oo = (Dimension) obj;
+        return width == oo.width && height == oo.height && depth == oo.depth && z == oo.z;
     }
 }

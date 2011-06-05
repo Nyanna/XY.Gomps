@@ -12,26 +12,11 @@ import net.xy.gps.type.Rectangle;
 public class EmptyDataDriver implements IDataProvider {
     private final Object[] mocks = new Object[] {
             new PoiData(105, 105, "TestPoint"),
-            new WayData(new double[][] { { 109, 109 }, { 108, 109 }, { 107, 106 }, { 105, 106 } })
-    };
-    private int i = 0;
+            new WayData(new Double[][] { { 109.0, 109.0 }, { 108.0, 109.0 }, { 107.0, 106.0 },
+                    { 105.0, 106.0 } }) };
 
     @Override
-    public Iterator get(final Rectangle bounds) {
-        return new Iterator() {
-
-            @Override
-            public IDataObject next() {
-                return (IDataObject) mocks[i++];
-            }
-
-            @Override
-            public boolean hasNext() {
-                if (i < mocks.length) {
-                    return true;
-                }
-                return false;
-            }
-        };
+    public void get(final Rectangle bounds, final IDataReceiver receiver) {
+        receiver.accept(mocks);
     }
 }

@@ -1,5 +1,7 @@
 package net.xy.gps.data;
 
+import java.io.Serializable;
+
 import net.xy.gps.type.Point;
 
 /**
@@ -8,7 +10,7 @@ import net.xy.gps.type.Point;
  * @author Xyan
  * 
  */
-public interface IDataObject {
+public interface IDataObject extends Serializable {
     /**
      * data type constants used for casting
      */

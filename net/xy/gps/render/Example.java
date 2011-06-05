@@ -11,14 +11,16 @@ import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.image.BufferedImage;
-import java.sql.SQLException;
 
+import net.xy.codebase.Debug;
+import net.xy.codebase.ThreadLocal;
 import net.xy.codebase.Utils;
-import net.xy.gps.data.HSQLDriver;
 import net.xy.gps.data.IDataObject;
-import net.xy.gps.render.IDataProvider.Iterator;
-import net.xy.gps.render.perspective.Action2DViewAwt;
+import net.xy.gps.data.TileDriver;
+import net.xy.gps.render.IDataProvider.IDataReceiver;
+import net.xy.gps.render.perspective.Action2DView;
+import net.xy.gps.render.perspective.AwtListener;
+import net.xy.gps.type.Rectangle;
 
 public class Example {
     private static final long serialVersionUID = -6720509574401297090L;
@@ -32,13 +34,15 @@ public class Example {
      * initialized via config
      */
     // 2d or 3d
-    private final Action2DViewAwt perspective = new Action2DViewAwt(MAIN.getWidth(), MAIN.getHeight());
+    private final Action2DView perspective = new Action2DView(MAIN.getWidth(), MAIN.getHeight());
     // maybe an db or file
-    private final IDataProvider data;
+    private final IDataProvider data = new TileDriver();
     /**
      * layers should store and cache as much as possible
      */
-    private final SimpleLayer[] layers = new SimpleLayer[] { new SimpleLayer() };
+    private final ILayer wayLayer = new ZoomWayLayer(perspective);
+    private final ILayer nodeLayer = new ZoomNodeLayer(perspective);
+    private final ILayer[] layers = new ILayer[] { new StatLayer(perspective), nodeLayer, wayLayer };
 
     /**
      * move indicators
@@ -46,18 +50,15 @@ public class Example {
     private double moveX = 0;
     private double moveY = 0;
     private final double acceleration = 1.1;
-    private final double limit = 6;
+    private final double limit = 18;
     // percentage stepping of viewport
-    private static final double move = 0.01;
+    private static final double move = 0.05;
     private double[] dragStart = null;
     private boolean shouldRepaint = false;
+    private static Thread paint;
+    private static Thread db;
 
     public Example() {
-        try {
-            data = new HSQLDriver();
-        } catch (final SQLException e1) {
-            throw new RuntimeException(e1);
-        }
         for (final ILayer layer : layers) {
             perspective.addLayer(layer);
         }
@@ -71,7 +72,8 @@ public class Example {
             @Override
             public void mousePressed(final MouseEvent e) {
                 if (e.getButton() == MouseEvent.BUTTON1) {
-                    dragStart = new double[] { e.getXOnScreen(), e.getYOnScreen(), perspective.getViewPort().upperleft.lat,
+                    dragStart = new double[] { e.getXOnScreen(), e.getYOnScreen(),
+                            perspective.getViewPort().upperleft.lat,
                             perspective.getViewPort().upperleft.lon };
                 }
             }
@@ -99,6 +101,7 @@ public class Example {
                     final double moveLon = disY * perspective.getPixelSize().height;
                     perspective.setViewPort(dragStart[2] + moveLat, dragStart[3] + moveLon);
                     shouldRepaint = true;
+                    ThreadLocal.set(true, paint);
                     // }
                 }
             }
@@ -158,9 +161,9 @@ public class Example {
                     }
                     break;
                 case KeyEvent.VK_PLUS:
-                     moveView(0, 0, 1);
-                     break;
-                 case KeyEvent.VK_MINUS:
+                    moveView(0, 0, 1);
+                    break;
+                case KeyEvent.VK_MINUS:
                     moveView(0, 0, -1);
                     break;
                 }
@@ -171,26 +174,51 @@ public class Example {
     public static void main(final String[] args) {
         final Example main = new Example();
         MAIN.setVisible(true);
-        // main.perspective.paintTo(MAIN.getGraphics());
-        new Thread(new Runnable() {
+        final GraphicsConfiguration gfxCfg = MAIN.getGraphicsConfiguration();
+        db = new Thread(new Runnable() {
+            private Rectangle oldRect = null;
+
             @Override
             public void run() {
                 while (true) {
-                    main.updateObjects();
-                    Utils.sleep(1000);
+                    ThreadLocal.set(false);
+                    final Rectangle actual = main.perspective.getViewPort();
+                    if (oldRect == null || !oldRect.equals(actual)) {
+                        oldRect = actual;
+                        main.updateObjects();
+                    }
+                    if (!(Boolean) ThreadLocal.get()) {
+                        Utils.sleep(1000);
+                    }
                 }
             }
-        }, "DataCollector").start();
-        final GraphicsConfiguration gfxCfg = MAIN.getGraphicsConfiguration();
+        }, "DataCollector");
+        db.setPriority(Thread.MIN_PRIORITY);
+        db.start();
+        final AwtListener listener = new AwtListener(MAIN.getGraphics(), main.perspective);
+        main.perspective.setListener(listener);
+        paint = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    ThreadLocal.set(false);
+                    if (main.shouldRepaint) {
+                        main.shouldRepaint = false;
+                        listener.update();
+                        MAIN.setTitle(main.perspective.getViewPort().toString());
+                    }
+                    if (!(Boolean) ThreadLocal.get()) {
+                        Utils.sleep(40);
+                    }
+                }
+            }
+        }, "PaintThread");
+        paint.setPriority(Thread.MIN_PRIORITY);
+        paint.start();
+        main.shouldRepaint = true;
         while (true) {
             if (main.moveX != 0 || main.moveY != 0) {
                 main.moveView(main.moveX, main.moveY, 0);
-            }
-            if (main.shouldRepaint) {
-                main.shouldRepaint = false;
-                final BufferedImage backBuffer = gfxCfg.createCompatibleImage(MAIN.getWidth(), MAIN.getHeight());
-                main.perspective.paintTo(backBuffer.getGraphics());
-                MAIN.getGraphics().drawImage(backBuffer, 0, 0, null);
             }
             Utils.sleep(40);
         }
@@ -205,37 +233,49 @@ public class Example {
     private void moveView(final double x, final double y, final int z) {
         if (x > 0 || x < 0) {
             final double byX = perspective.getViewPort().dimension.height * move * x;
-            perspective.setViewPort(perspective.getViewPort().upperleft.lat + byX, perspective.getViewPort().upperleft.lon);
+            perspective.setViewPort(perspective.getViewPort().upperleft.lat + byX,
+                    perspective.getViewPort().upperleft.lon);
         }
         if (y > 0 || y < 0) {
             final double byY = perspective.getViewPort().dimension.width * move * y;
-            perspective.setViewPort(perspective.getViewPort().upperleft.lat, perspective.getViewPort().upperleft.lon + byY);
+            perspective.setViewPort(perspective.getViewPort().upperleft.lat,
+                    perspective.getViewPort().upperleft.lon + byY);
         }
         final double byW = perspective.getViewPort().dimension.width * 0.3;
         final double byH = perspective.getViewPort().dimension.height * 0.3;
         if (z > 0) {
             final double newLat = perspective.getViewPort().upperleft.lat + byW / 2;
             final double newLon = perspective.getViewPort().upperleft.lon + byH / 2;
-            perspective.setViewPort(newLat, newLon, perspective.getViewPort().dimension.width - byW,
+            perspective.setViewPort(newLat, newLon,
+                    perspective.getViewPort().dimension.width - byW,
                     perspective.getViewPort().dimension.height - byH);
         } else if (z < 0) {
             final double newLat = perspective.getViewPort().upperleft.lat - byW / 2;
             final double newLon = perspective.getViewPort().upperleft.lon - byH / 2;
-            perspective.setViewPort(newLat, newLon, perspective.getViewPort().dimension.width + byW,
+            perspective.setViewPort(newLat, newLon,
+                    perspective.getViewPort().dimension.width + byW,
                     perspective.getViewPort().dimension.height + byH);
         }
         perspective.setSize(MAIN.getWidth(), MAIN.getHeight());
         shouldRepaint = true;
+        ThreadLocal.set(true, paint);
+        ThreadLocal.set(true, db);
     }
 
     private void updateObjects() {
-        final Iterator objects = data.get(perspective.getViewPort());
-        layers[0].clear();
-        while (objects.hasNext()) {
-            final IDataObject obj = objects.next();
-            // do sorting and insertion into layers
-            layers[0].addObject(obj);
-        }
-        shouldRepaint = true;
+        nodeLayer.clear();
+        // wayLayer.clear();
+        System.out.println(Debug.values("Data layers cleared"));
+        data.get(perspective.getViewPort(), new IDataReceiver() {
+            @Override
+            public void accept(final Object[] data) {
+                System.out.println(Debug.values("Accepting new data from provider", data.length));
+                for (final Object dat : data) {
+                    // do sorting and insertion into layers
+                    nodeLayer.addObject((IDataObject) dat);
+                    wayLayer.addObject((IDataObject) dat);
+                }
+            }
+        });
     }
 }

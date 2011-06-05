@@ -1,6 +1,5 @@
 package net.xy.gps.render;
 
-import net.xy.gps.data.IDataObject;
 import net.xy.gps.type.Rectangle;
 
 /**
@@ -12,33 +11,26 @@ import net.xy.gps.type.Rectangle;
 public interface IDataProvider {
 
     /**
-     * returns all objects laying even partly in the given box
+     * blocks and calls receiver as more data becomes available
      * 
      * @param bounds
      * @return
      */
-    public Iterator get(Rectangle bounds);
+    public void get(Rectangle bounds, final IDataReceiver receiver);
 
     /**
-     * iterator replacement to decouple from jlang
+     * data listener
      * 
-     * @author xyan
+     * @author Xyan
      * 
      */
-    public static interface Iterator {
+    public static interface IDataReceiver {
 
         /**
-         * usual iterator operation
+         * receives the data
          * 
-         * @return
+         * @param data
          */
-        public IDataObject next();
-
-        /**
-         * usual iterator operation
-         * 
-         * @return
-         */
-        public boolean hasNext();
+        public void accept(final Object[] data);
     }
 }

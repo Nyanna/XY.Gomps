@@ -1,8 +1,10 @@
 package net.xy.gps.render.perspective;
 
 import net.xy.codebase.ObjectArray;
+import net.xy.codebase.ThreadLocal;
 import net.xy.gps.render.ICanvas;
 import net.xy.gps.render.ILayer;
+import net.xy.gps.render.draw.IDrawAction;
 import net.xy.gps.type.Dimension;
 import net.xy.gps.type.Point;
 import net.xy.gps.type.Rectangle;
@@ -19,8 +21,9 @@ public class Action2DView implements ICanvas {
     /**
      * coordinate space used
      */
-    private Rectangle view = new Rectangle(new Point(8, 53), new Dimension(1, 1));
+    private Rectangle view = new Rectangle(new Point(53, 8), new Dimension(1, 1));
     private Dimension unitSize = null;
+    private ActionListener listener;
 
     /**
      * default constructor
@@ -28,14 +31,33 @@ public class Action2DView implements ICanvas {
      * @param width
      * @param height
      */
-    public Action2DView(final int width, final int height) {
+    public Action2DView(final int width, final int height, final ActionListener listener) {
         setSize(width, height);
+        this.listener = listener;
+    }
+
+    /**
+     * default without listener
+     * 
+     * @param width
+     * @param height
+     */
+    public Action2DView(final int width, final int height) {
+        this(width, height, null);
     }
 
     @Override
     public int addLayer(final ILayer layer) {
         layers.add(layer);
-        return layers.getLastIndex();
+        final int index = layers.getLastIndex();
+        layer.setListener(new ActionListener() {
+
+            @Override
+            public void draw(final IDrawAction action) {
+                listener.draw(action);
+            }
+        });
+        return index;
     }
 
     @Override
@@ -49,7 +71,8 @@ public class Action2DView implements ICanvas {
     }
 
     @Override
-    public void setViewPort(final double lat, final double lon, final double width, final double height) {
+    public void setViewPort(final double lat, final double lon, final double width,
+            final double height) {
         view = new Rectangle(new Point(lat, lon), new Dimension(width, height));
         calculateUnitSize();
     }
@@ -63,39 +86,36 @@ public class Action2DView implements ICanvas {
     }
 
     @Override
+    public Dimension getSize() {
+        return displaySize;
+    }
+
+    @Override
     public Dimension getPixelSize() {
         return unitSize;
     }
 
     /**
-     * returns all draw action for the corresponding viewport
+     * implements an listener if action could aggregated
      * 
-     * @return
+     * @author Xyan
+     * 
      */
-    public Object[] getDrawActions() {
-        final ObjectArray actions = new ObjectArray();
-        for (final Object layer : layers.get()) {
-            actions.add(((ILayer) layer).getDrawActions(view));
-        }
-        return actions.get();
+    public static interface ActionListener {
+        /**
+         * receives draw actions
+         * 
+         * @param action
+         */
+        public void draw(IDrawAction action);
     }
 
-    /**
-     * relativize lat and returns x value o current view
-     * 
-     * @param lat
-     * @return
-     */
+    @Override
     public int getX(final double lat) {
         return (int) Math.round(((lat - view.upperleft.lat) / unitSize.width));
     }
 
-    /**
-     * relativize lon and returns y value o current view
-     * 
-     * @param lat
-     * @return
-     */
+    @Override
     public int getY(final double lon) {
         return (int) Math.round(((lon - view.upperleft.lon) / unitSize.height));
     }
@@ -108,6 +128,22 @@ public class Action2DView implements ICanvas {
      * @return
      */
     private void calculateUnitSize() {
-        unitSize = new Dimension(view.dimension.width / displaySize.width, view.dimension.height / displaySize.height);
+        unitSize = new Dimension(view.dimension.width / displaySize.width, view.dimension.height
+                / displaySize.height);
+    }
+
+    @Override
+    public void update() {
+        for (final Object layer : layers.get()) {
+            if ((Boolean) ThreadLocal.get()) {
+                return;
+            }
+            ((ILayer) layer).update();
+        }
+    }
+
+    @Override
+    public void setListener(final ActionListener listener) {
+        this.listener = listener;
     }
 }

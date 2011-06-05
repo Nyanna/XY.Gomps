@@ -1,5 +1,6 @@
 package net.xy.gps.type;
 
+import java.io.Serializable;
 
 /**
  * implements an bounding box by just wrapping Dimension and Point
@@ -7,17 +8,24 @@ package net.xy.gps.type;
  * @author xyan
  * 
  */
-public class Rectangle {
+public class Rectangle implements Serializable {
+    private static final long serialVersionUID = 4302623671518569356L;
 
     /**
      * upper left starting point
      */
-    public final Point upperleft;
+    public Point upperleft;
 
     /**
      * overall dimensions
      */
-    public final Dimension dimension;
+    public Dimension dimension;
+
+    /**
+     * serialization constructor
+     */
+    public Rectangle() {
+    }
 
     /**
      * default constructor
@@ -42,5 +50,25 @@ public class Rectangle {
      */
     public Point getPoint(final float x, final float y) {
         throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public String toString() {
+        return new StringBuilder().append("Start: ").append(upperleft.lat).append(" by ")
+                .append(upperleft.lon).append(" with ").append(dimension.width).append(" x ")
+                .append(dimension.height).toString();
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (!(obj instanceof Rectangle)) {
+            return false;
+        }
+        final Rectangle oo = (Rectangle) obj;
+        return (upperleft == oo.upperleft || upperleft != null && upperleft.equals(oo.upperleft)) && //
+                (dimension == oo.dimension || dimension != null && dimension.equals(oo.dimension));
     }
 }

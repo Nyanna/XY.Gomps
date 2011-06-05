@@ -1,5 +1,6 @@
 package net.xy.gps.render;
 
+import net.xy.gps.render.perspective.Action2DView.ActionListener;
 import net.xy.gps.type.Dimension;
 import net.xy.gps.type.Rectangle;
 
@@ -42,7 +43,8 @@ public interface ICanvas {
      * @param width
      * @param height
      */
-    public void setViewPort(final double lat, final double lon, final double width, final double height);
+    public void setViewPort(final double lat, final double lon, final double width,
+            final double height);
 
     /**
      * set new window size on resize operation
@@ -50,9 +52,42 @@ public interface ICanvas {
     public void setSize(final int width, final int height);
 
     /**
+     * returns actual viewportsize in pixels
+     * 
+     * @return
+     */
+    public Dimension getSize();
+
+    /**
      * returns calculated pixel dimensions
      * 
      * @return
      */
     public Dimension getPixelSize();
+
+    /**
+     * relativize lat and returns x value o current view
+     * 
+     * @param lat
+     * @return
+     */
+    public int getX(final double lat);
+
+    /**
+     * relativize lon and returns y value o current view
+     * 
+     * @param lat
+     * @return
+     */
+    public int getY(final double lon);
+
+    /**
+     * redraws all actions
+     */
+    public void update();
+
+    /**
+     * sets the listener
+     */
+    public void setListener(final ActionListener listener);
 }

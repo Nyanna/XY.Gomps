@@ -1,8 +1,17 @@
 package net.xy.gps.render.draw;
 
 public class DrawPoint implements IDrawAction {
+    /**
+     * point position
+     */
     public final double lat;
+    /**
+     * point position
+     */
     public final double lon;
+    /**
+     * point color
+     */
     public final int[] color;
 
     /**
