@@ -1,6 +1,6 @@
 package net.xy.gps.render;
 
-import net.xy.codebase.ThreadLocal;
+import net.xy.codebasel.ThreadLocal;
 
 /**
  * inter thread communicator

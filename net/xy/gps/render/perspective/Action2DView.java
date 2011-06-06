@@ -1,7 +1,7 @@
 package net.xy.gps.render.perspective;
 
-import net.xy.codebase.ObjectArray;
-import net.xy.codebase.ThreadLocal;
+import net.xy.codebasel.ObjectArray;
+import net.xy.codebasel.ThreadLocal;
 import net.xy.gps.render.ICanvas;
 import net.xy.gps.render.ILayer;
 import net.xy.gps.render.draw.IDrawAction;
