@@ -7,8 +7,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 
-import net.xy.codebase.Debug;
-import net.xy.codebase.ThreadLocal;
+import net.xy.codebasel.Debug;
+import net.xy.codebasel.ThreadLocal;
 import net.xy.gps.render.IDataProvider;
 import net.xy.gps.type.Boundary;
 import net.xy.gps.type.Dimension;
@@ -56,7 +56,7 @@ public class HSQLDriver implements IDataProvider {
                         .getDouble("lon"), "Poi") });
                 nodes++;
             }
-            System.out.println(Debug.values("Got Nodes", nodes));
+            System.out.println(Debug.values("Got Nodes", new Object[] { nodes }));
             // target boundingbox is in view //START
             final double boxlatstart = bounds.upperleft.lat;
             final double boxlonstart = bounds.upperleft.lon;
@@ -103,7 +103,7 @@ public class HSQLDriver implements IDataProvider {
                 receiver.accept(new IDataObject[] { new WayData(cords) });
                 ways++;
             }
-            System.out.println(Debug.values("Got Ways", ways));
+            System.out.println(Debug.values("Got Ways", new Object[] { ways }));
         } catch (final SQLException e) {
         }
     }
@@ -185,8 +185,8 @@ public class HSQLDriver implements IDataProvider {
             query.execute(qstr);
             query.close();
         } catch (final SQLException e) {
-            throw new IllegalStateException(Debug.values("Could not convert way", id, nodes, qstr),
-                    e);
+            throw new IllegalStateException(Debug.values("Could not convert way", new Object[] {
+                    id, nodes, qstr }), e);
         }
     }
 
@@ -204,7 +204,7 @@ public class HSQLDriver implements IDataProvider {
             query.execute("CREATE TABLE waynodes (wayid INTEGER, nodeid INTEGER)");
             query.close();
         } catch (final SQLException e) {
-            throw new IllegalStateException(Debug.values("Error on removing an node"), e);
+            throw new IllegalStateException("Error on removing an node", e);
         }
     }
 
@@ -237,7 +237,7 @@ public class HSQLDriver implements IDataProvider {
                 }
             }
         } catch (final SQLException e) {
-            throw new IllegalStateException(Debug.values("Error accessing DB"), e);
+            throw new IllegalStateException("Error accessing DB", e);
         }
         return new Rectangle(new Point(0, 0), new Dimension());
     }

@@ -9,7 +9,7 @@ import java.util.List;
 import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLStreamException;
 
-import net.xy.codebase.Utils;
+import net.xy.codebasel.Utils;
 import net.xy.gps.converter.StaxOsmParser.IObjectListener;
 import net.xy.gps.data.HSQLDriver;
 import net.xy.gps.data.IDataObject;

@@ -12,9 +12,9 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-import net.xy.codebase.Debug;
-import net.xy.codebase.ThreadLocal;
-import net.xy.codebase.Utils;
+import net.xy.codebasel.Debug;
+import net.xy.codebasel.ThreadLocal;
+import net.xy.codebasel.Utils;
 import net.xy.gps.data.IDataObject;
 import net.xy.gps.data.TileDriver;
 import net.xy.gps.render.IDataProvider.IDataReceiver;
@@ -265,11 +265,12 @@ public class Example {
     private void updateObjects() {
         nodeLayer.clear();
         // wayLayer.clear();
-        System.out.println(Debug.values("Data layers cleared"));
+        System.out.println("Data layers cleared");
         data.get(perspective.getViewPort(), new IDataReceiver() {
             @Override
             public void accept(final Object[] data) {
-                System.out.println(Debug.values("Accepting new data from provider", data.length));
+                System.out.println(Debug.values("Accepting new data from provider",
+                        new Object[] { data.length }));
                 for (final Object dat : data) {
                     // do sorting and insertion into layers
                     nodeLayer.addObject((IDataObject) dat);

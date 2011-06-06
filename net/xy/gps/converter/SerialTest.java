@@ -8,7 +8,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import net.xy.codebase.serialization.SerialContext;
+import net.xy.codebasel.serialization.SerialContext;
 import net.xy.gps.data.BasicTile;
 import net.xy.gps.data.IDataObject;
 import net.xy.gps.data.WayData;
