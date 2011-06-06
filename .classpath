@@ -2,8 +2,8 @@
 <classpath>
 	<classpathentry kind="src" path=""/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/codebase"/>
 	<classpathentry kind="lib" path="L:/Matrice/lib/Java_ME_platform_SDK_3.0/lib/midp_2.0.jar"/>
 	<classpathentry kind="lib" path="lib/hsqldb.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Codebase"/>
 	<classpathentry kind="output" path=""/>
 </classpath>

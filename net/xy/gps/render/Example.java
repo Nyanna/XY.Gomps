@@ -15,6 +15,7 @@ import java.awt.event.WindowEvent;
 import net.xy.codebase.Debug;
 import net.xy.codebase.ThreadLocal;
 import net.xy.codebase.Utils;
+import net.xy.codebasel.config.Config;
 import net.xy.gps.data.IDataObject;
 import net.xy.gps.data.TileDriver;
 import net.xy.gps.render.IDataProvider.IDataReceiver;
@@ -73,8 +74,7 @@ public class Example {
             public void mousePressed(final MouseEvent e) {
                 if (e.getButton() == MouseEvent.BUTTON1) {
                     dragStart = new double[] { e.getXOnScreen(), e.getYOnScreen(),
-                            perspective.getViewPort().upperleft.lat,
-                            perspective.getViewPort().upperleft.lon };
+                            perspective.getViewPort().upperleft.lat, perspective.getViewPort().upperleft.lon };
                 }
             }
 
@@ -109,8 +109,7 @@ public class Example {
         MAIN.addKeyListener(new KeyListener() {
 
             @Override
-            public void keyTyped(final KeyEvent e) {
-            }
+            public void keyTyped(final KeyEvent e) {}
 
             @Override
             public void keyReleased(final KeyEvent e) {
@@ -172,6 +171,7 @@ public class Example {
     }
 
     public static void main(final String[] args) {
+        Config.addDefaultRetrievers(args);
         final Example main = new Example();
         MAIN.setVisible(true);
         final GraphicsConfiguration gfxCfg = MAIN.getGraphicsConfiguration();
@@ -238,22 +238,20 @@ public class Example {
         }
         if (y > 0 || y < 0) {
             final double byY = perspective.getViewPort().dimension.width * move * y;
-            perspective.setViewPort(perspective.getViewPort().upperleft.lat,
-                    perspective.getViewPort().upperleft.lon + byY);
+            perspective.setViewPort(perspective.getViewPort().upperleft.lat, perspective.getViewPort().upperleft.lon
+                    + byY);
         }
         final double byW = perspective.getViewPort().dimension.width * 0.3;
         final double byH = perspective.getViewPort().dimension.height * 0.3;
         if (z > 0) {
             final double newLat = perspective.getViewPort().upperleft.lat + byW / 2;
             final double newLon = perspective.getViewPort().upperleft.lon + byH / 2;
-            perspective.setViewPort(newLat, newLon,
-                    perspective.getViewPort().dimension.width - byW,
+            perspective.setViewPort(newLat, newLon, perspective.getViewPort().dimension.width - byW,
                     perspective.getViewPort().dimension.height - byH);
         } else if (z < 0) {
             final double newLat = perspective.getViewPort().upperleft.lat - byW / 2;
             final double newLon = perspective.getViewPort().upperleft.lon - byH / 2;
-            perspective.setViewPort(newLat, newLon,
-                    perspective.getViewPort().dimension.width + byW,
+            perspective.setViewPort(newLat, newLon, perspective.getViewPort().dimension.width + byW,
                     perspective.getViewPort().dimension.height + byH);
         }
         perspective.setSize(MAIN.getWidth(), MAIN.getHeight());

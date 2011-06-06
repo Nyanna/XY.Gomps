@@ -12,6 +12,8 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+import net.xy.codebasel.config.Config;
+import net.xy.codebasel.config.Config.ConfigKey;
 import net.xy.gps.data.IDataObject;
 import net.xy.gps.data.PoiData;
 
@@ -22,6 +24,13 @@ import net.xy.gps.data.PoiData;
  * 
  */
 public class StaxOsmParser {
+    /**
+     * messages
+     */
+    private static final ConfigKey CONF_WRONG_SORTED = Config
+            .registerValues(
+                    "osm.xml.praser.error.sorting",
+                    " Found node after begin of ways. Streamline back reference not possible. XML has to be ordered nodes > ways > relations");
 
     /**
      * main parse method
@@ -38,12 +47,13 @@ public class StaxOsmParser {
         final long total = inputXml.length();
         final XMLStreamReader reader = XMLInputFactory.newFactory().createXMLStreamReader(fin);
         boolean phase2_ways = false;
-        while (reader.getEventType() != XMLStreamConstants.END_DOCUMENT && reader.next() != XMLStreamConstants.END_DOCUMENT) {
+        while (reader.getEventType() != XMLStreamConstants.END_DOCUMENT
+                && reader.next() != XMLStreamConstants.END_DOCUMENT) {
             // <node...
-            if (reader.getEventType() == XMLStreamConstants.START_ELEMENT && "node".equals(reader.getName().getLocalPart())) {
+            if (reader.getEventType() == XMLStreamConstants.START_ELEMENT
+                    && "node".equals(reader.getName().getLocalPart())) {
                 if (phase2_ways) {
-                    throw new IllegalStateException(
-                            "Found node after begin of ways. Streamline back reference not possible. XML has to be ordered nodes > ways > relations");
+                    throw new IllegalStateException(Config.getString(CONF_WRONG_SORTED));
                 }
                 final int id = Integer.valueOf(reader.getAttributeValue(null, "id"));
                 final double lat = Double.valueOf(reader.getAttributeValue(null, "lat"));
@@ -58,7 +68,8 @@ public class StaxOsmParser {
                 }
             }
             // <way...
-            if (reader.getEventType() == XMLStreamConstants.START_ELEMENT && "way".equals(reader.getName().getLocalPart())) {
+            if (reader.getEventType() == XMLStreamConstants.START_ELEMENT
+                    && "way".equals(reader.getName().getLocalPart())) {
                 phase2_ways = true;
                 final int id = Integer.valueOf(reader.getAttributeValue(null, "id"));
                 final List nodes = new ArrayList();

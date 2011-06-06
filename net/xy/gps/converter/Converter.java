@@ -10,6 +10,8 @@ import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLStreamException;
 
 import net.xy.codebase.Utils;
+import net.xy.codebasel.config.Config;
+import net.xy.codebasel.config.Config.ConfigKey;
 import net.xy.gps.converter.StaxOsmParser.IObjectListener;
 import net.xy.gps.data.HSQLDriver;
 import net.xy.gps.data.IDataObject;
@@ -26,12 +28,17 @@ public class Converter {
      * progress in percentage
      */
     private static int state = 0;
+    /**
+     * xm source name
+     */
+    private static final ConfigKey CONF_XML_FILE = Config.registerValues("source", "osm/xml/bremen.osm");
+    private static final ConfigKey CONF_CONV_END = Config.registerValues("converter.end", "Done");
 
     /**
      * @param args
      */
     public static void main(final String[] args) {
-        final File in = new File("osm/xml/bremen.osm");
+        final File in = new File(Config.getString(CONF_XML_FILE));
         final Thread parse = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -76,6 +83,6 @@ public class Converter {
             System.out.println(state + "%");
             Utils.sleep(1000);
         }
-        System.out.println("Done.");
+        System.out.println(Config.getString(CONF_CONV_END));
     }
 }
