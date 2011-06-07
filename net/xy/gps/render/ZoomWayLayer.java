@@ -14,7 +14,7 @@ public class ZoomWayLayer extends SimpleLayer {
     /**
      * must fit at least of 10 in height or width to be displayed
      */
-    public int mustFit = 10;
+    public int mustFit = 4;
     /**
      * reference to draw surface
      */
