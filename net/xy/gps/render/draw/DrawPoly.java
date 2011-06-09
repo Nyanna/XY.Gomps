@@ -1,5 +1,7 @@
 package net.xy.gps.render.draw;
 
+import net.xy.gps.render.IDrawAction;
+
 /**
  * draws multipoint ways
  * 
@@ -27,7 +29,7 @@ public class DrawPoly implements IDrawAction {
         this.color = color;
     }
 
-    @Override
+    
     public int getType() {
         return IDrawAction.ACTION_WAY;
     }

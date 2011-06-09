@@ -3,8 +3,8 @@ package net.xy.gps.render.perspective;
 import net.xy.codebasel.ObjectArray;
 import net.xy.codebasel.ThreadLocal;
 import net.xy.gps.render.ICanvas;
+import net.xy.gps.render.IDrawAction;
 import net.xy.gps.render.ILayer;
-import net.xy.gps.render.draw.IDrawAction;
 import net.xy.gps.type.Dimension;
 import net.xy.gps.type.Point;
 import net.xy.gps.type.Rectangle;
@@ -46,13 +46,11 @@ public class Action2DView implements ICanvas {
         this(width, height, null);
     }
 
-    @Override
     public int addLayer(final ILayer layer) {
         layers.add(layer);
         final int index = layers.getLastIndex();
         layer.setListener(new ActionListener() {
 
-            @Override
             public void draw(final IDrawAction action) {
                 listener.draw(action);
             }
@@ -60,37 +58,32 @@ public class Action2DView implements ICanvas {
         return index;
     }
 
-    @Override
     public Rectangle getViewPort() {
         return view;
     }
 
-    @Override
     public void setViewPort(final double lat, final double lon) {
         view = new Rectangle(new Point(lat, lon), view.dimension);
     }
 
-    @Override
-    public void setViewPort(final double lat, final double lon, final double width,
-            final double height) {
+    public void setViewPort(final double lat, final double lon, final double width, final double height) {
         view = new Rectangle(new Point(lat, lon), new Dimension(width, height));
         calculateUnitSize();
     }
 
-    @Override
     public void setSize(final int width, final int height) {
-        if (displaySize == null || width != displaySize.width || height != displaySize.height) {
+        final double ratio = (double) width / height;
+        if (displaySize == null || width != displaySize.width || height != (int) displaySize.width * ratio) {
             displaySize = new Dimension(width, height);
+            view = new Rectangle(view.origin, new Dimension(view.dimension.width, view.dimension.width * ratio));
             calculateUnitSize();
         }
     }
 
-    @Override
     public Dimension getSize() {
         return displaySize;
     }
 
-    @Override
     public Dimension getPixelSize() {
         return unitSize;
     }
@@ -110,14 +103,24 @@ public class Action2DView implements ICanvas {
         public void draw(IDrawAction action);
     }
 
-    @Override
-    public int getX(final double lat) {
-        return (int) Math.round(((lat - view.upperleft.lat) / unitSize.width));
+    public int getX(final double lon) {
+        return (int) Math.round(((lon - view.origin.lon) / unitSize.height));
     }
 
-    @Override
-    public int getY(final double lon) {
-        return (int) Math.round(((lon - view.upperleft.lon) / unitSize.height));
+    public int getY(final double lat) {
+        /*
+         * osm origin is bottom left (equar meridian), displays and calculation
+         * top left and graphics origin is top left
+         */
+        return (int) Math.round(displaySize.height - (lat - view.origin.lat) / unitSize.width);
+    }
+
+    public double getLon(final int xpos) {
+        return xpos * unitSize.height;
+    }
+
+    public double getLat(final int ypos) {
+        return (displaySize.height - ypos) * unitSize.width;
     }
 
     /**
@@ -128,21 +131,20 @@ public class Action2DView implements ICanvas {
      * @return
      */
     private void calculateUnitSize() {
-        unitSize = new Dimension(view.dimension.width / displaySize.width, view.dimension.height
-                / displaySize.height);
+        unitSize = new Dimension(view.dimension.width / displaySize.height, view.dimension.height / displaySize.width);
     }
 
-    @Override
     public void update() {
-        for (final Object layer : layers.get()) {
-            if ((Boolean) ThreadLocal.get()) {
+        final Object[] layers = this.layers.get();
+        for (int i = 0; i < layers.length; i++) {
+            final ILayer layer = (ILayer) layers[i];
+            if (((Boolean) ThreadLocal.get()).booleanValue()) {
                 return;
             }
-            ((ILayer) layer).update();
+            layer.update();
         }
     }
 
-    @Override
     public void setListener(final ActionListener listener) {
         this.listener = listener;
     }

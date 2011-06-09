@@ -1,5 +1,7 @@
 package net.xy.gps.render.draw;
 
+import net.xy.gps.render.IDrawAction;
+
 /**
  * draw text mostly used for gui creation
  * 
@@ -24,7 +26,7 @@ public class DrawText extends DrawPoint {
         this.text = text;
     }
 
-    @Override
+    
     public int getType() {
         return IDrawAction.ACTION_TEXT;
     }

@@ -1,4 +1,4 @@
-package net.xy.gps.render.draw;
+package net.xy.gps.render;
 
 /**
  * main protocol object interface

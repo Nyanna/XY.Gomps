@@ -30,8 +30,7 @@ public class WayData implements IDataObject {
     /**
      * serialization constructor
      */
-    public WayData() {
-    }
+    public WayData() {}
 
     /**
      * default constructor
@@ -41,8 +40,10 @@ public class WayData implements IDataObject {
     public WayData(final Double[][] path) {
         this.path = path;
         final Boundary maxmin = new Boundary(new char[] { '<', '<', '>', '>' });
-        for (final Double[] pair : path) {
-            maxmin.check(new double[] { pair[0], pair[1], pair[0], pair[1] });
+        for (int i = 0; i < path.length; i++) {
+            final Double[] pair = path[i];
+            maxmin.check(new double[] { pair[0].doubleValue(), pair[1].doubleValue(), pair[0].doubleValue(),
+                    pair[1].doubleValue() });
         }
         final double minLat = maxmin.values[0];
         final double minLon = maxmin.values[1];
@@ -51,16 +52,13 @@ public class WayData implements IDataObject {
         final double midLat = minLat + (maxLat - minLat) / 2;
         final double midLon = minLon + (maxLon - minLon) / 2;
         center = new Point(midLat, midLon);
-        bounds = new Rectangle(new Point(minLat, minLon), new Dimension(maxLat - minLat, maxLon
-                - minLon));
+        bounds = new Rectangle(new Point(minLat, minLon), new Dimension(maxLat - minLat, maxLon - minLon));
     }
 
-    @Override
     public Point getPosition() {
         return center;
     }
 
-    @Override
     public int getType() {
         return IDataObject.DATA_WAY;
     }

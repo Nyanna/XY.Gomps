@@ -1,4 +1,4 @@
-package net.xy.gps.converter;
+package net.xy.gps.data.converter;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -55,10 +55,10 @@ public class StaxOsmParser {
                 if (phase2_ways) {
                     throw new IllegalStateException(Config.getString(CONF_WRONG_SORTED));
                 }
-                final int id = Integer.valueOf(reader.getAttributeValue(null, "id"));
-                final double lat = Double.valueOf(reader.getAttributeValue(null, "lat"));
-                final double lon = Double.valueOf(reader.getAttributeValue(null, "lon"));
-                listener.put(new PoiData(lat, lon, String.valueOf(id)));
+                final Integer id = Integer.valueOf(reader.getAttributeValue(null, "id"));
+                final Double lat = Double.valueOf(reader.getAttributeValue(null, "lat"));
+                final Double lon = Double.valueOf(reader.getAttributeValue(null, "lon"));
+                listener.put(new PoiData(lat.doubleValue(), lon.doubleValue(), String.valueOf(id)));
                 // until </node>
                 while (reader.next() != XMLStreamConstants.END_DOCUMENT) {
                     if (reader.getEventType() == XMLStreamConstants.END_ELEMENT
@@ -71,7 +71,7 @@ public class StaxOsmParser {
             if (reader.getEventType() == XMLStreamConstants.START_ELEMENT
                     && "way".equals(reader.getName().getLocalPart())) {
                 phase2_ways = true;
-                final int id = Integer.valueOf(reader.getAttributeValue(null, "id"));
+                final Integer id = Integer.valueOf(reader.getAttributeValue(null, "id"));
                 final List nodes = new ArrayList();
                 // until </way>
                 while (reader.next() != XMLStreamConstants.END_DOCUMENT) {
@@ -83,7 +83,7 @@ public class StaxOsmParser {
                         break;
                     }
                 }
-                listener.putWay(id, nodes);
+                listener.putWay(id.intValue(), nodes);
             }
             listener.state(100 - fin.available() / (total / 100));
         }

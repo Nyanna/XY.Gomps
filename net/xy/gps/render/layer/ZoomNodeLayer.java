@@ -1,6 +1,7 @@
-package net.xy.gps.render;
+package net.xy.gps.render.layer;
 
 import net.xy.gps.data.IDataObject;
+import net.xy.gps.render.ICanvas;
 import net.xy.gps.render.draw.DrawPoint;
 
 /**
@@ -29,14 +30,14 @@ public class ZoomNodeLayer extends SimpleLayer {
         this.canvas = canvas;
     }
 
-    @Override
+    
     public void addObject(final IDataObject object) {
         if (IDataObject.DATA_POINT == object.getType()) {
             super.addObject(object);
         }
     }
 
-    @Override
+    
     void draw(final IDataObject robj) {
         final int limit = (int) (Math.min(canvas.getSize().width, canvas.getSize().height) / 100 * maxAmount);
         if (objs.size() < limit) {

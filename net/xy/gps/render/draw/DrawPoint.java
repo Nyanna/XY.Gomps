@@ -1,5 +1,7 @@
 package net.xy.gps.render.draw;
 
+import net.xy.gps.render.IDrawAction;
+
 public class DrawPoint implements IDrawAction {
     /**
      * point position
@@ -26,7 +28,7 @@ public class DrawPoint implements IDrawAction {
         this.color = color;
     }
 
-    @Override
+    
     public int getType() {
         return IDrawAction.ACTION_POINT;
     }

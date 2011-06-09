@@ -35,12 +35,12 @@ public class PoiData implements IDataObject {
         this.label = label;
     }
 
-    @Override
+    
     public Point getPosition() {
         return position;
     }
 
-    @Override
+    
     public int getType() {
         return IDataObject.DATA_POINT;
     }

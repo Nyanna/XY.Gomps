@@ -1,10 +1,12 @@
-package net.xy.gps.render;
+package net.xy.gps.render.layer;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import net.xy.codebasel.ThreadLocal;
 import net.xy.gps.data.IDataObject;
+import net.xy.gps.render.ILayer;
 import net.xy.gps.render.perspective.Action2DView.ActionListener;
 
 /**
@@ -27,10 +29,9 @@ public abstract class SimpleLayer implements ILayer {
      */
     protected ActionListener listener = null;
 
-    @Override
     public void addObject(final IDataObject object) {
         synchronized (objs) {
-            objs.put(object.hashCode(), object);
+            objs.put(Integer.valueOf(object.hashCode()), object);
         }
         draw(object);
     }
@@ -43,16 +44,15 @@ public abstract class SimpleLayer implements ILayer {
      */
     abstract void draw(final IDataObject robj);
 
-    @Override
     public void setListener(final ActionListener listener) {
         this.listener = listener;
     }
 
-    @Override
     public void update() {
         synchronized (objs) {
-            for (final Object obj : objs.values()) {
-                if ((Boolean) ThreadLocal.get()) {
+            for (final Iterator iterator = objs.values().iterator(); iterator.hasNext();) {
+                final Object obj = iterator.next();
+                if (((Boolean) ThreadLocal.get()).booleanValue()) {
                     return;
                 }
                 draw((IDataObject) obj);
@@ -60,7 +60,6 @@ public abstract class SimpleLayer implements ILayer {
         }
     }
 
-    @Override
     public void clear() {
         synchronized (objs) {
             objs = new HashMap();

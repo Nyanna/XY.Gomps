@@ -1,4 +1,4 @@
-package net.xy.gps.render;
+package net.xy.gps.data;
 
 import net.xy.gps.type.Rectangle;
 

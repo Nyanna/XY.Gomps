@@ -14,7 +14,7 @@ public class Rectangle implements Serializable {
     /**
      * upper left starting point
      */
-    public Point upperleft;
+    public Point origin;
 
     /**
      * overall dimensions
@@ -34,7 +34,7 @@ public class Rectangle implements Serializable {
      * @param dimension
      */
     public Rectangle(final Point start, final Dimension dimension) {
-        upperleft = start;
+        origin = start;
         this.dimension = dimension;
     }
 
@@ -52,14 +52,14 @@ public class Rectangle implements Serializable {
         throw new UnsupportedOperationException("Not implemented");
     }
 
-    @Override
+    
     public String toString() {
-        return new StringBuilder().append("Start: ").append(upperleft.lat).append(" by ")
-                .append(upperleft.lon).append(" with ").append(dimension.width).append(" x ")
+        return new StringBuilder().append("Start: ").append(origin.lat).append(" by ")
+                .append(origin.lon).append(" with ").append(dimension.width).append(" x ")
                 .append(dimension.height).toString();
     }
 
-    @Override
+    
     public boolean equals(final Object obj) {
         if (obj == this) {
             return true;
@@ -68,7 +68,7 @@ public class Rectangle implements Serializable {
             return false;
         }
         final Rectangle oo = (Rectangle) obj;
-        return (upperleft == oo.upperleft || upperleft != null && upperleft.equals(oo.upperleft)) && //
+        return (origin == oo.origin || origin != null && origin.equals(oo.origin)) && //
                 (dimension == oo.dimension || dimension != null && dimension.equals(oo.dimension));
     }
 }

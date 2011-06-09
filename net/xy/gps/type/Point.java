@@ -50,7 +50,7 @@ public class Point implements Serializable {
         z = 0;
     }
 
-    @Override
+    
     public boolean equals(final Object obj) {
         if (obj == this) {
             return true;

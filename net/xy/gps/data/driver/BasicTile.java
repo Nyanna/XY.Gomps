@@ -1,6 +1,8 @@
-package net.xy.gps.data;
+package net.xy.gps.data.driver;
 
 import java.io.Serializable;
+
+import net.xy.gps.data.IDataObject;
 
 /**
  * basic tile to save data

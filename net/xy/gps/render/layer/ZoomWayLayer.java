@@ -1,7 +1,8 @@
-package net.xy.gps.render;
+package net.xy.gps.render.layer;
 
 import net.xy.gps.data.IDataObject;
 import net.xy.gps.data.WayData;
+import net.xy.gps.render.ICanvas;
 import net.xy.gps.render.draw.DrawPoly;
 
 /**
@@ -29,14 +30,14 @@ public class ZoomWayLayer extends SimpleLayer {
         this.canvas = canvas;
     }
 
-    @Override
+    
     public void addObject(final IDataObject object) {
         if (IDataObject.DATA_WAY == object.getType()) {
             super.addObject(object);
         }
     }
 
-    @Override
+    
     void draw(final IDataObject robj) {
         final double tenWidth = canvas.getViewPort().dimension.width / 100 * mustFit;
         final double tenHeight = canvas.getViewPort().dimension.height / 100 * mustFit;

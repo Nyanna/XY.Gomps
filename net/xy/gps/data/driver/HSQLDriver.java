@@ -1,4 +1,4 @@
-package net.xy.gps.data;
+package net.xy.gps.data.driver;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -7,12 +7,17 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 
-import net.xy.codebasel.Debug;
 import net.xy.codebasel.Log;
+import net.xy.codebasel.LogCritical;
+import net.xy.codebasel.LogError;
+import net.xy.codebasel.LogWarning;
 import net.xy.codebasel.ThreadLocal;
 import net.xy.codebasel.config.Config;
 import net.xy.codebasel.config.Config.ConfigKey;
-import net.xy.gps.render.IDataProvider;
+import net.xy.gps.data.IDataObject;
+import net.xy.gps.data.IDataProvider;
+import net.xy.gps.data.PoiData;
+import net.xy.gps.data.WayData;
 import net.xy.gps.type.Boundary;
 import net.xy.gps.type.Dimension;
 import net.xy.gps.type.Point;
@@ -28,16 +33,24 @@ public class HSQLDriver implements IDataProvider {
     /**
      * configuration & messages
      */
-    private static final ConfigKey CONF_DB_SOURCE = Config.registerValues(
-            "osm.source.db.connection", "jdbc:hsqldb:file:osm/data;shutdown=true");
-    private static final ConfigKey CONF_DB_COLLECTED_NODES = Config.registerValues(
-            "osm.source.collected.nodes", "Got Nodes");
-    private static final ConfigKey CONF_DB_COLLECTED_WAYS = Config.registerValues(
-            "osm.source.collected.ways", "Got Ways");
+    private static final ConfigKey CONF_DB_SOURCE = Config.registerValues("osm.source.db.connection",
+            "jdbc:hsqldb:file:osm/data;shutdown=true");
+    private static final ConfigKey CONF_DB_COLLECTED_NODES = Config.registerValues("osm.source.collected.nodes",
+            "Got Nodes");
+    private static final ConfigKey CONF_DB_COLLECTED_WAYS = Config.registerValues("osm.source.collected.ways",
+            "Got Ways");
     private static final ConfigKey CONF_DB_ERROR_DO = Config.registerValues("osm.source.error.do",
             "Error on accessing DB");
-    private static final ConfigKey CONF_DB_ERROR_RESET = Config.registerValues(
-            "osm.source.error.reset", "Error on reset DB");
+    private static final ConfigKey CONF_DB_ERROR_RESET = Config.registerValues("osm.source.error.reset",
+            "Error on reset DB");
+    private static final ConfigKey CONF_DB_ERROR_ADDNODE = Config.registerValues("osm.source.error.addnode",
+            "Error on adding an node");
+    private static final ConfigKey CONF_DB_ERROR_WAY_COVERT = Config.registerValues("osm.source.error.way.convert",
+            "Error on converting an way");
+    private static final ConfigKey CONF_DB_ERROR_CLEAN_NODES = Config.registerValues("osm.source.error.clean.nodes",
+            "Error on cleaning way covered nodes");
+    private static final ConfigKey CONF_DB_ERROR_BOUNDS = Config.registerValues("osm.source.error.bounds",
+            "Error on retrieving db boundaries");;
     /**
      * stores the connection
      */
@@ -49,35 +62,31 @@ public class HSQLDriver implements IDataProvider {
      * @throws SQLException
      */
     public HSQLDriver() throws SQLException {
-        ThreadLocal.set(false);
+        ThreadLocal.set(Boolean.FALSE);
         c = DriverManager.getConnection(Config.getString(CONF_DB_SOURCE), "SA", "");
     }
 
-    @Override
     public void get(final Rectangle bounds, final IDataReceiver receiver) {
         final Statement query;
         try {
             query = c.createStatement();
-            ResultSet result = query.executeQuery("select * from nodes where lat > "
-                    + bounds.upperleft.lat + " and lat < "
-                    + (bounds.upperleft.lat + bounds.dimension.width) + " and lon > "
-                    + bounds.upperleft.lon + " and lon < "
-                    + (bounds.upperleft.lon + bounds.dimension.height));
+            ResultSet result = query.executeQuery("select * from nodes where lat > " + bounds.origin.lat
+                    + " and lat < " + (bounds.origin.lat + bounds.dimension.width) + " and lon > " + bounds.origin.lon
+                    + " and lon < " + (bounds.origin.lon + bounds.dimension.height));
             int nodes = 0;
             while (result.next()) {
-                if ((Boolean) ThreadLocal.get()) {
+                if (((Boolean) ThreadLocal.get()).booleanValue()) {
                     return;
                 }
-                receiver.accept(new IDataObject[] { new PoiData(result.getDouble("lat"), result
-                        .getDouble("lon"), "Poi") });
+                receiver.accept(new IDataObject[] { new PoiData(result.getDouble("lat"), result.getDouble("lon"), "Poi") });
                 nodes++;
             }
-            Log.notice(CONF_DB_COLLECTED_NODES, new Object[] { nodes });
+            Log.notice(CONF_DB_COLLECTED_NODES, new Object[] { Integer.valueOf(nodes) });
             // target boundingbox is in view //START
-            final double boxlatstart = bounds.upperleft.lat;
-            final double boxlonstart = bounds.upperleft.lon;
-            final double boxlatend = bounds.upperleft.lat + bounds.dimension.width;
-            final double boxlonend = bounds.upperleft.lon + bounds.dimension.height;
+            final double boxlatstart = bounds.origin.lat;
+            final double boxlonstart = bounds.origin.lon;
+            final double boxlatend = bounds.origin.lat + bounds.dimension.width;
+            final double boxlonend = bounds.origin.lon + bounds.dimension.height;
             final String minlatInRange = "minlat > boxlatstart AND minlat < boxlatend";
             final String maxlatInRange = "maxlat > boxlatstart AND maxlat < boxlatend";
             final String minlonInRange = "minlon > boxlonstart AND minlon < boxlonend";
@@ -105,7 +114,7 @@ public class HSQLDriver implements IDataProvider {
             // target boundingbox is in view //END
             int ways = 0;
             while (result.next()) {
-                if ((Boolean) ThreadLocal.get()) {
+                if (((Boolean) ThreadLocal.get()).booleanValue()) {
                     return;
                 }
                 final Object[] coordPairs = (Object[]) result.getArray("path").getArray();
@@ -118,9 +127,9 @@ public class HSQLDriver implements IDataProvider {
                 receiver.accept(new IDataObject[] { new WayData(cords) });
                 ways++;
             }
-            Log.notice(CONF_DB_COLLECTED_WAYS, new Object[] { ways });
+            Log.notice(CONF_DB_COLLECTED_WAYS, new Object[] { Integer.valueOf(ways) });
         } catch (final SQLException e) {
-            Log.fattal(CONF_DB_ERROR_DO, new Object[] { e });
+            throw new LogCritical(CONF_DB_ERROR_DO, e);
         }
     }
 
@@ -140,7 +149,7 @@ public class HSQLDriver implements IDataProvider {
             query.execute("DROP TABLE IF EXISTS waynodes");
             query.execute("CREATE TABLE waynodes (wayid INTEGER, nodeid INTEGER)");
         } catch (final SQLException e) {
-            throw new IllegalStateException("Could not reset Tables", e);
+            throw new LogCritical(CONF_DB_ERROR_RESET, e);
         }
     }
 
@@ -153,11 +162,11 @@ public class HSQLDriver implements IDataProvider {
         final Statement query;
         try {
             query = c.createStatement();
-            query.execute("INSERT INTO nodes (id,lat,lon) VALUES (" + data.label + ","
-                    + data.getPosition().lat + "," + data.getPosition().lon + ")");
+            query.execute("INSERT INTO nodes (id,lat,lon) VALUES (" + data.label + "," + data.getPosition().lat + ","
+                    + data.getPosition().lon + ")");
             query.close();
         } catch (final SQLException e) {
-            throw new IllegalStateException("Could not add node", e);
+            throw new LogCritical(CONF_DB_ERROR_ADDNODE, e);
         }
     }
 
@@ -177,8 +186,7 @@ public class HSQLDriver implements IDataProvider {
             final Boundary maxmin = new Boundary(new char[] { '<', '<', '>', '>' });
             for (int i = 0; i < nodes.size(); i++) {
                 final Object nodeId = nodes.get(i);
-                final ResultSet result = query.executeQuery("SELECT * FROM nodes WHERE id = "
-                        + nodeId.toString());
+                final ResultSet result = query.executeQuery("SELECT * FROM nodes WHERE id = " + nodeId.toString());
                 if (result.next()) {
                     if (path.length() > 0) {
                         path.append(",");
@@ -192,17 +200,15 @@ public class HSQLDriver implements IDataProvider {
                     // throw new
                     // IllegalStateException("Way referenced node is not in DB");
                 }
-                query.execute("INSERT INTO waynodes (wayid,nodeid) VALUES (" + id + ","
-                        + nodeId.toString() + ")");
+                query.execute("INSERT INTO waynodes (wayid,nodeid) VALUES (" + id + "," + nodeId.toString() + ")");
             }
-            qstr = "INSERT INTO ways (id,minlat,minlon,maxlat,maxlon,path) VALUES (" + id + ","
-                    + maxmin.values[0] + "," + maxmin.values[1] + "," + maxmin.values[2] + ","
-                    + maxmin.values[3] + ", ARRAY[" + path + "])";
+            qstr = "INSERT INTO ways (id,minlat,minlon,maxlat,maxlon,path) VALUES (" + id + "," + maxmin.values[0]
+                    + "," + maxmin.values[1] + "," + maxmin.values[2] + "," + maxmin.values[3] + ", ARRAY[" + path
+                    + "])";
             query.execute(qstr);
             query.close();
         } catch (final SQLException e) {
-            throw new IllegalStateException(Debug.values("Could not convert way", new Object[] {
-                    id, nodes, qstr }), e);
+            throw new LogCritical(CONF_DB_ERROR_WAY_COVERT, e, new Object[] { Integer.valueOf(id), nodes, qstr });
         }
     }
 
@@ -220,7 +226,7 @@ public class HSQLDriver implements IDataProvider {
             query.execute("CREATE TABLE waynodes (wayid INTEGER, nodeid INTEGER)");
             query.close();
         } catch (final SQLException e) {
-            throw new IllegalStateException("Error on removing an node", e);
+            throw new LogWarning(CONF_DB_ERROR_CLEAN_NODES, e);
         }
     }
 
@@ -242,18 +248,17 @@ public class HSQLDriver implements IDataProvider {
                     result = query.executeQuery("SELECT lon FROM nodes ORDER BY lon LIMIT 1");
                     if (result.next()) {
                         final double minLon = result.getDouble("lon");
-                        result = query
-                                .executeQuery("SELECT lon FROM nodes ORDER BY lon DESC LIMIT 1");
+                        result = query.executeQuery("SELECT lon FROM nodes ORDER BY lon DESC LIMIT 1");
                         if (result.next()) {
                             final double maxLon = result.getDouble("lon");
-                            return new Rectangle(new Point(minLat, minLon), new Dimension(maxLat
-                                    - minLat, maxLon - minLon));
+                            return new Rectangle(new Point(minLat, minLon), new Dimension(maxLat - minLat, maxLon
+                                    - minLon));
                         }
                     }
                 }
             }
         } catch (final SQLException e) {
-            throw new IllegalStateException("Error accessing DB", e);
+            throw new LogError(CONF_DB_ERROR_BOUNDS, e);
         }
         return new Rectangle(new Point(0, 0), new Dimension());
     }

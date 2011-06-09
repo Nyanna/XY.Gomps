@@ -1,4 +1,4 @@
-package net.xy.gps.converter;
+package net.xy.gps.data.converter;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -6,8 +6,8 @@ import java.sql.SQLException;
 import net.xy.codebasel.Log;
 import net.xy.codebasel.config.Config;
 import net.xy.codebasel.config.Config.ConfigKey;
-import net.xy.gps.data.HSQLDriver;
-import net.xy.gps.data.TileDriver;
+import net.xy.gps.data.driver.HSQLDriver;
+import net.xy.gps.data.driver.TileDriver;
 
 /**
  * converts the db to mobile usable tile sets
