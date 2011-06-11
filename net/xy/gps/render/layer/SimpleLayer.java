@@ -30,10 +30,17 @@ public abstract class SimpleLayer implements ILayer {
     protected ActionListener listener = null;
 
     public void addObject(final IDataObject object) {
+        final Integer hash = Integer.valueOf(object.hashCode());
+        boolean exist;
         synchronized (objs) {
-            objs.put(Integer.valueOf(object.hashCode()), object);
+            exist = objs.containsKey(hash);
+            if (!exist) {
+                objs.put(hash, object);
+            }
         }
-        draw(object);
+        if (!exist) {
+            draw(object);
+        }
     }
 
     /**
@@ -42,7 +49,7 @@ public abstract class SimpleLayer implements ILayer {
      * @param robj
      * @param listener
      */
-    abstract void draw(final IDataObject robj);
+    abstract protected void draw(final IDataObject robj);
 
     public void setListener(final ActionListener listener) {
         this.listener = listener;

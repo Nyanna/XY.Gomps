@@ -34,8 +34,7 @@ public class Point implements Serializable {
     /**
      * serialization constructor
      */
-    public Point() {
-    }
+    public Point() {}
 
     /**
      * simplke constructor
@@ -50,7 +49,10 @@ public class Point implements Serializable {
         z = 0;
     }
 
-    
+    public int hashCode() {
+        return (int) ((lat + 1) * (lon + 1) * (x + 1) * (z + 1));
+    }
+
     public boolean equals(final Object obj) {
         if (obj == this) {
             return true;

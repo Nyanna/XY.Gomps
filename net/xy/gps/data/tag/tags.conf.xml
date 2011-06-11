@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<tags>
+	<tag name="Boundary/Administration" priority="1" enabled="true">
+		<style fill="true" color="249,90,79,100"/>
+		<conditions>
+			<tagmatch key="boundary" value="administrative" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Example" priority="10" enabled="true">
+		<style fill="true" color="49,290,179,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="boundary" value="administrative" type="way"/>
+			</orCondition>
+		</conditions>
+	</tag>
+</tags>

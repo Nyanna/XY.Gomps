@@ -43,8 +43,7 @@ public interface ICanvas {
      * @param width
      * @param height
      */
-    public void setViewPort(final double lat, final double lon, final double width,
-            final double height);
+    public void setViewPort(final double lat, final double lon, final double width, final double height);
 
     /**
      * set new window size on resize operation
@@ -90,4 +89,11 @@ public interface ICanvas {
      * sets the listener
      */
     public void setListener(final ActionListener listener);
+
+    /**
+     * removes all existing layers
+     * 
+     * @param objects
+     */
+    public void removeLayers();
 }

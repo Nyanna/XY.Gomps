@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLInputFactory;
@@ -12,10 +14,12 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+import net.xy.codebasel.Log;
 import net.xy.codebasel.config.Config;
 import net.xy.codebasel.config.Config.ConfigKey;
 import net.xy.gps.data.IDataObject;
 import net.xy.gps.data.PoiData;
+import net.xy.gps.data.tag.TagFactory;
 
 /**
  * stax parser for osm xml
@@ -41,41 +45,60 @@ public class StaxOsmParser {
      * @throws XMLStreamException
      * @throws IOException
      */
-    public static void parse(final File inputXml, final IObjectListener listener) throws XMLStreamException,
-            FactoryConfigurationError, IOException {
+    public static void parse(final File inputXml, final IObjectListener listener)
+            throws XMLStreamException, FactoryConfigurationError, IOException {
         final FileInputStream fin = new FileInputStream(inputXml);
         final long total = inputXml.length();
-        final XMLStreamReader reader = XMLInputFactory.newFactory().createXMLStreamReader(fin);
+        final XMLStreamReader reader = XMLInputFactory.newInstance().createXMLStreamReader(fin);
         boolean phase2_ways = false;
-        while (reader.getEventType() != XMLStreamConstants.END_DOCUMENT
-                && reader.next() != XMLStreamConstants.END_DOCUMENT) {
+        int nodeCount = 0;
+        while (reader.getEventType() != XMLStreamConstants.END_DOCUMENT) {
+            doNext(reader);
             // <node...
             if (reader.getEventType() == XMLStreamConstants.START_ELEMENT
                     && "node".equals(reader.getName().getLocalPart())) {
+                Log.log(Log.LVL_TRACE, "Parse node...", null);
+                nodeCount++;
                 if (phase2_ways) {
                     throw new IllegalStateException(Config.getString(CONF_WRONG_SORTED));
                 }
                 final Integer id = Integer.valueOf(reader.getAttributeValue(null, "id"));
                 final Double lat = Double.valueOf(reader.getAttributeValue(null, "lat"));
                 final Double lon = Double.valueOf(reader.getAttributeValue(null, "lon"));
-                listener.put(new PoiData(lat.doubleValue(), lon.doubleValue(), String.valueOf(id)));
+                final Map tags = new HashMap();
                 // until </node>
-                while (reader.next() != XMLStreamConstants.END_DOCUMENT) {
-                    if (reader.getEventType() == XMLStreamConstants.END_ELEMENT
+                while (reader.getEventType() != XMLStreamConstants.END_DOCUMENT) {
+                    doNext(reader);
+                    if (reader.getEventType() == XMLStreamConstants.START_ELEMENT
+                            && "tag".equals(reader.getName().getLocalPart())) {
+                        tags.put(reader.getAttributeValue(null, "k"),
+                                reader.getAttributeValue(null, "v"));
+                    } else if (reader.getEventType() == XMLStreamConstants.END_ELEMENT
                             && "node".equals(reader.getName().getLocalPart())) {
                         break;
                     }
                 }
-            }
+                listener.put(new PoiData(lat.doubleValue(), lon.doubleValue(), id.intValue(),
+                        TagFactory.getTags(IDataObject.DATA_POINT, tags)));
+                Log.log(Log.LVL_TRACE, "Parse node done", null);
+            } else
             // <way...
             if (reader.getEventType() == XMLStreamConstants.START_ELEMENT
                     && "way".equals(reader.getName().getLocalPart())) {
+                Log.log(Log.LVL_TRACE, "Parse way...", null);
                 phase2_ways = true;
                 final Integer id = Integer.valueOf(reader.getAttributeValue(null, "id"));
+                final Map tags = new HashMap();
                 final List nodes = new ArrayList();
+                int dataType = IDataObject.DATA_WAY;
                 // until </way>
-                while (reader.next() != XMLStreamConstants.END_DOCUMENT) {
+                while (reader.getEventType() != XMLStreamConstants.END_DOCUMENT) {
+                    doNext(reader);
                     if (reader.getEventType() == XMLStreamConstants.START_ELEMENT
+                            && "tag".equals(reader.getName().getLocalPart())) {
+                        tags.put(reader.getAttributeValue(null, "k"),
+                                reader.getAttributeValue(null, "v"));
+                    } else if (reader.getEventType() == XMLStreamConstants.START_ELEMENT
                             && "nd".equals(reader.getName().getLocalPart())) {
                         nodes.add(Integer.valueOf(reader.getAttributeValue(null, "ref")));
                     } else if (reader.getEventType() == XMLStreamConstants.END_ELEMENT
@@ -83,10 +106,32 @@ public class StaxOsmParser {
                         break;
                     }
                 }
-                listener.putWay(id.intValue(), nodes);
+                // check for area firts and alst node are the same
+                if (nodes.size() > 1
+                        && ((Integer) nodes.get(0)).intValue() == ((Integer) nodes
+                                .get(nodes.size() - 1)).intValue()) {
+                    dataType = IDataObject.DATA_AREA;
+                }
+                listener.putWay(id.intValue(), nodes, TagFactory.getTags(dataType, tags));
+
+                Log.log(Log.LVL_TRACE, "Parse way done", null);
             }
-            listener.state(100 - fin.available() / (total / 100));
+            try {
+                listener.state(100 - fin.available() / (total / 100));
+            } catch (final IOException e) {
+                // in case reader closses fin
+            }
         }
+    }
+
+    /**
+     * interceptor
+     * 
+     * @param reader
+     * @throws XMLStreamException
+     */
+    private static final void doNext(final XMLStreamReader reader) throws XMLStreamException {
+        reader.next();
     }
 
     /**
@@ -116,7 +161,8 @@ public class StaxOsmParser {
          * 
          * @param id
          * @param path
+         * @param objects
          */
-        public void putWay(int id, List path);
+        public void putWay(final int id, final List path, final Object[] tags);
     }
 }

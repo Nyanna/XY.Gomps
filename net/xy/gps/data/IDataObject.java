@@ -17,6 +17,9 @@ public interface IDataObject extends Serializable {
     public static final int DATA_POINT = 0;
     public static final int DATA_WAY = 1;
     public static final int DATA_AREA = 2;
+    // TODO implement an proper java 1.3 enum clone
+    // maximum number of data constants
+    public static final int COUNT_DATA = 3;
 
     /**
      * returns type constant of this data
@@ -31,4 +34,11 @@ public interface IDataObject extends Serializable {
      * @return
      */
     public Point getPosition();
+
+    /**
+     * gets with this object associated tags
+     * 
+     * @return
+     */
+    public Object[] getTags();
 }

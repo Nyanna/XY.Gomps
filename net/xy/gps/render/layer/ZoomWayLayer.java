@@ -2,6 +2,8 @@ package net.xy.gps.render.layer;
 
 import net.xy.gps.data.IDataObject;
 import net.xy.gps.data.WayData;
+import net.xy.gps.data.tag.Tag;
+import net.xy.gps.data.tag.TagStyles;
 import net.xy.gps.render.ICanvas;
 import net.xy.gps.render.draw.DrawPoly;
 
@@ -15,11 +17,16 @@ public class ZoomWayLayer extends SimpleLayer {
     /**
      * must fit at least of 10 in height or width to be displayed
      */
-    public int mustFit = 4;
+    public int mustFit = 5;
     /**
      * reference to draw surface
      */
     private final ICanvas canvas;
+    /**
+     * limits recalculated on update call
+     */
+    private double tenWidth = 0.2;
+    private double tenHeight = 0.2;
 
     /**
      * default constructor
@@ -28,22 +35,32 @@ public class ZoomWayLayer extends SimpleLayer {
      */
     public ZoomWayLayer(final ICanvas canvas) {
         this.canvas = canvas;
+        update();
     }
 
-    
     public void addObject(final IDataObject object) {
         if (IDataObject.DATA_WAY == object.getType()) {
             super.addObject(object);
         }
     }
 
-    
-    void draw(final IDataObject robj) {
-        final double tenWidth = canvas.getViewPort().dimension.width / 100 * mustFit;
-        final double tenHeight = canvas.getViewPort().dimension.height / 100 * mustFit;
+    protected void draw(final IDataObject robj) {
+        if (listener == null) {
+            return;
+        }
         final WayData way = (WayData) robj;
         if (way.bounds.dimension.width > tenWidth || way.bounds.dimension.height > tenHeight) {
-            listener.draw(new DrawPoly(way.path, BASERGB));
+            int[] color = BASERGB;
+            if (robj.getTags() != null && robj.getTags().length > 0) {
+                color = TagStyles.getColor(((Tag) robj.getTags()[0]).type);
+            }
+            listener.draw(new DrawPoly(way.path, color));
         }
+    }
+
+    public void update() {
+        tenWidth = canvas.getViewPort().dimension.width / 100 * mustFit;
+        tenHeight = canvas.getViewPort().dimension.height / 100 * mustFit;
+        super.update();
     }
 }

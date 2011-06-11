@@ -34,7 +34,8 @@ public class DBConverter {
      */
     private static final ConfigKey CONF_XML_FILE = Config.registerValues("source",
             "osm/xml/bremen.osm");
-    private static final ConfigKey CONF_CONV_END = Config.registerValues("converter.end", "Done");
+    private static final ConfigKey CONF_CONV_END = Config.registerValues("converter.end",
+            "Done with parsing Creating tiles");
 
     /**
      * @param args
@@ -55,8 +56,8 @@ public class DBConverter {
                             }
                         }
 
-                        public void putWay(final int id, final List nodes) {
-                            hsql.convertWay(id, nodes);
+                        public void putWay(final int id, final List nodes, final Object[] tags) {
+                            hsql.convertWay(id, nodes, tags);
                         }
 
                         public void state(final long per) {
@@ -84,5 +85,6 @@ public class DBConverter {
             Utils.sleep(1000);
         }
         Log.trace(CONF_CONV_END);
+        TileCreator.main(args);
     }
 }

@@ -20,6 +20,10 @@ public class ZoomNodeLayer extends SimpleLayer {
      * reference to draw surface
      */
     private final ICanvas canvas;
+    /**
+     * stores the limit recalculated on each update
+     */
+    private int limit = 100;
 
     /**
      * default constructor
@@ -28,20 +32,29 @@ public class ZoomNodeLayer extends SimpleLayer {
      */
     public ZoomNodeLayer(final ICanvas canvas) {
         this.canvas = canvas;
+        update();
     }
 
-    
     public void addObject(final IDataObject object) {
-        if (IDataObject.DATA_POINT == object.getType()) {
+        if (objs.size() < limit && IDataObject.DATA_POINT == object.getType()) {
             super.addObject(object);
         }
     }
 
-    
-    void draw(final IDataObject robj) {
-        final int limit = (int) (Math.min(canvas.getSize().width, canvas.getSize().height) / 100 * maxAmount);
+    protected void draw(final IDataObject robj) {
+        if (listener == null) {
+            return;
+        }
         if (objs.size() < limit) {
             listener.draw(new DrawPoint(robj.getPosition().lat, robj.getPosition().lon, BASERGB));
+        }
+    }
+
+    public void update() {
+        limit = (int) Math
+                .round((Math.min(canvas.getSize().width, canvas.getSize().height) / 100 * maxAmount));
+        if (objs.size() < limit) {
+            super.update();
         }
     }
 }

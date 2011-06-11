@@ -15,13 +15,19 @@ public class PoiData implements IDataObject {
      * stores position
      */
     private Point position;
-    public String label;
+    /**
+     * stores the original osm id
+     */
+    public int osmid;
+    /**
+     * to this node corresponding tags
+     */
+    private Object[] tags = new Object[0];
 
     /**
      * serialization constructor
      */
-    public PoiData() {
-    }
+    public PoiData() {}
 
     /**
      * default constructor
@@ -30,18 +36,25 @@ public class PoiData implements IDataObject {
      * @param lon
      * @param label
      */
-    public PoiData(final double lat, final double lon, final String label) {
+    public PoiData(final double lat, final double lon, final int osmid, final Object[] tags) {
         position = new Point(lat, lon);
-        this.label = label;
+        this.osmid = osmid;
+        this.tags = tags;
     }
 
-    
     public Point getPosition() {
         return position;
     }
 
-    
     public int getType() {
         return IDataObject.DATA_POINT;
+    }
+
+    public Object[] getTags() {
+        return tags;
+    }
+
+    public int hashCode() {
+        return osmid * IDataObject.DATA_POINT;
     }
 }

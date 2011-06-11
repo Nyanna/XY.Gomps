@@ -20,6 +20,8 @@ import net.xy.gps.data.IDataObject;
 import net.xy.gps.data.IDataProvider;
 import net.xy.gps.data.PoiData;
 import net.xy.gps.data.WayData;
+import net.xy.gps.data.tag.Tag;
+import net.xy.gps.data.tag.Tag.ITagCondition;
 import net.xy.gps.type.Dimension;
 import net.xy.gps.type.Point;
 import net.xy.gps.type.Rectangle;
@@ -31,18 +33,18 @@ import net.xy.gps.type.Rectangle;
  * 
  */
 public class TileDriver implements IDataProvider {
-    public static final ConfigKey CONF_TEXT_ERROR_TILE_READ = Config.registerValues("driver.error.tile.read",
-            "Error on reading tile");
-    public static final ConfigKey CONF_TEXT_TILE_READ_STAT = Config.registerValues("driver.tile.read.stat",
-            "Loading tile tok");
-    public static final ConfigKey CONF_TEXT_TILE_READ_CACHE_NEW = Config.registerValues("driver.tile.read.cache.new",
-            "Read tile from new cache");
-    public static final ConfigKey CONF_TEXT_TILE_READ_CACHE_OLD = Config.registerValues("driver.tile.read.cache.old",
-            "Read tile from old cache");
-    public static final ConfigKey CONF_TEXT_CACHE_CLEAN = Config.registerValues("driver.tile.cache.clean",
-            "Clearing old cache");
-    public static final ConfigKey CONF_TEXT_ERROR_TILE_WRITE = Config.registerValues("driver.error.tile.write",
-            "Write tile");
+    public static final ConfigKey CONF_TEXT_ERROR_TILE_READ = Config.registerValues(
+            "driver.error.tile.read", "Error on reading tile");
+    public static final ConfigKey CONF_TEXT_TILE_READ_STAT = Config.registerValues(
+            "driver.tile.read.stat", "Loading tile tok milliseconds, dataset");
+    public static final ConfigKey CONF_TEXT_TILE_READ_CACHE_NEW = Config.registerValues(
+            "driver.tile.read.cache.new", "Read tile from new cache");
+    public static final ConfigKey CONF_TEXT_TILE_READ_CACHE_OLD = Config.registerValues(
+            "driver.tile.read.cache.old", "Read tile from old cache");
+    public static final ConfigKey CONF_TEXT_CACHE_CLEAN = Config.registerValues(
+            "driver.tile.cache.clean", "Clearing old cache");
+    public static final ConfigKey CONF_TEXT_ERROR_TILE_WRITE = Config.registerValues(
+            "driver.error.tile.write", "Write tile");
     /**
      * tile size lat
      */
@@ -54,12 +56,13 @@ public class TileDriver implements IDataProvider {
     /**
      * reduces loading time of already cached tiles, refreshes each request
      */
-    private Map tileCache = new HashMap();
+    private final Map tileCache = new HashMap();
     /**
      * holds the serilization context
      */
-    private final SerialContext ctx = new SerialContext(new Class[] { WayData.class, Point.class, Dimension.class,
-            Rectangle.class, IDataObject.class, BasicTile.class, PoiData.class });
+    private final SerialContext ctx = new SerialContext(new Class[] { WayData.class, Point.class,
+            Dimension.class, Rectangle.class, IDataObject.class, BasicTile.class, PoiData.class,
+            ITagCondition.class, Tag.class });
 
     public void get(final Rectangle bounds, final IDataReceiver receiver) {
         final int latTilStart = (int) Math.ceil(bounds.origin.lat / LAT_SIZE) - 1;
@@ -80,17 +83,33 @@ public class TileDriver implements IDataProvider {
                     if (tile == null) {
                         final long start = System.currentTimeMillis();
                         try {
-                            final DataInputStream oin = new DataInputStream(new FileInputStream(new File(tilename)));
+                            final DataInputStream oin = new DataInputStream(new FileInputStream(
+                                    new File(tilename)));
                             tile = (BasicTile) ctx.deserialize(oin);
                         } catch (final FileNotFoundException e) {
                             continue; // skip reading tile is empty
                         } catch (final Exception e) {
                             Log.warning(CONF_TEXT_ERROR_TILE_READ, new Object[] { tilename });
+                            if (e.getCause() != null) {
+                                Log.log(Log.LVL_NOTICE,
+                                        e.toString() + "\n" + Log.printStack(e.getStackTrace(), 3)
+                                                + "\nCaused by: " + e.getCause().toString() + "\n"
+                                                + Log.printStack(e.getCause().getStackTrace(), 3),
+                                        null);
+                            } else {
+                                Log.log(Log.LVL_NOTICE,
+                                        e.toString() + "\n" + Log.printStack(e.getStackTrace(), 3),
+                                        null);
+                            }
                             continue; // skip
                         }
+                        tileCache.put(tilename, tile);
                         newTileCache.put(tilename, tile);
-                        Log.comment(CONF_TEXT_TILE_READ_STAT,
-                                new Object[] { tilename, Long.valueOf((System.currentTimeMillis() - start) / 1000) });
+                        Log.comment(
+                                CONF_TEXT_TILE_READ_STAT,
+                                new Object[] { tilename,
+                                        Long.valueOf((System.currentTimeMillis() - start)),
+                                        Integer.valueOf(tile.objects.length) });
                     } else {
                         Log.comment(CONF_TEXT_TILE_READ_CACHE_NEW, new Object[] { tilename });
                     }
@@ -103,7 +122,8 @@ public class TileDriver implements IDataProvider {
             }
         }
         Log.comment(CONF_TEXT_CACHE_CLEAN);
-        tileCache = newTileCache; // copy over
+        // TODO configurable layer and cache clear
+        // tileCache = newTileCache; // copy over
     }
 
     /**
@@ -113,8 +133,8 @@ public class TileDriver implements IDataProvider {
      * @throws IllegalAccessException
      * @throws IllegalArgumentException
      */
-    public void writeTiles(final IDataProvider provider) throws IOException, IllegalArgumentException,
-            IllegalAccessException {
+    public void writeTiles(final IDataProvider provider) throws IOException,
+            IllegalArgumentException, IllegalAccessException {
         final int latTilStart, lonTilStart, latTilRange, lonTilRange;
         if (provider instanceof HSQLDriver) {
             final Rectangle bounds = ((HSQLDriver) provider).getDBBounds();
@@ -130,8 +150,8 @@ public class TileDriver implements IDataProvider {
         }
         for (int latt = latTilStart; latt <= latTilStart + latTilRange; latt++) {
             for (int lont = lonTilStart; lont <= lonTilStart + lonTilRange; lont++) {
-                final Rectangle bounds = new Rectangle(new Point(latt * LAT_SIZE, lont * LON_SIZE), new Dimension(
-                        LAT_SIZE, LON_SIZE));
+                final Rectangle bounds = new Rectangle(new Point(latt * LAT_SIZE, lont * LON_SIZE),
+                        new Dimension(LAT_SIZE, LON_SIZE));
                 final String tilename = getTileName(latt, lont);
                 Log.notice(CONF_TEXT_ERROR_TILE_WRITE, new Object[] { tilename });
                 final ObjectArray objects = new ObjectArray();

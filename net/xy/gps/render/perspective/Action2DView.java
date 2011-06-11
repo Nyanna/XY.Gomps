@@ -13,7 +13,7 @@ public class Action2DView implements ICanvas {
     /**
      * stores the layers
      */
-    private final ObjectArray layers = new ObjectArray(10, 10);
+    private ObjectArray layers = new ObjectArray(10, 10);
     /**
      * initial unit or pixel dimensions
      */
@@ -56,6 +56,10 @@ public class Action2DView implements ICanvas {
             }
         });
         return index;
+    }
+
+    public void removeLayers() {
+        layers = new ObjectArray(10, 10);
     }
 
     public Rectangle getViewPort() {

@@ -11,6 +11,7 @@ import net.xy.codebasel.Log;
 import net.xy.codebasel.LogCritical;
 import net.xy.codebasel.LogError;
 import net.xy.codebasel.LogWarning;
+import net.xy.codebasel.ObjectArray;
 import net.xy.codebasel.ThreadLocal;
 import net.xy.codebasel.config.Config;
 import net.xy.codebasel.config.Config.ConfigKey;
@@ -18,6 +19,7 @@ import net.xy.gps.data.IDataObject;
 import net.xy.gps.data.IDataProvider;
 import net.xy.gps.data.PoiData;
 import net.xy.gps.data.WayData;
+import net.xy.gps.data.tag.Tag;
 import net.xy.gps.type.Boundary;
 import net.xy.gps.type.Dimension;
 import net.xy.gps.type.Point;
@@ -33,24 +35,24 @@ public class HSQLDriver implements IDataProvider {
     /**
      * configuration & messages
      */
-    private static final ConfigKey CONF_DB_SOURCE = Config.registerValues("osm.source.db.connection",
-            "jdbc:hsqldb:file:osm/data;shutdown=true");
-    private static final ConfigKey CONF_DB_COLLECTED_NODES = Config.registerValues("osm.source.collected.nodes",
-            "Got Nodes");
-    private static final ConfigKey CONF_DB_COLLECTED_WAYS = Config.registerValues("osm.source.collected.ways",
-            "Got Ways");
+    private static final ConfigKey CONF_DB_SOURCE = Config.registerValues(
+            "osm.source.db.connection", "jdbc:hsqldb:file:osm/data;shutdown=true");
+    private static final ConfigKey CONF_DB_COLLECTED_NODES = Config.registerValues(
+            "osm.source.collected.nodes", "Got Nodes");
+    private static final ConfigKey CONF_DB_COLLECTED_WAYS = Config.registerValues(
+            "osm.source.collected.ways", "Got Ways");
     private static final ConfigKey CONF_DB_ERROR_DO = Config.registerValues("osm.source.error.do",
             "Error on accessing DB");
-    private static final ConfigKey CONF_DB_ERROR_RESET = Config.registerValues("osm.source.error.reset",
-            "Error on reset DB");
-    private static final ConfigKey CONF_DB_ERROR_ADDNODE = Config.registerValues("osm.source.error.addnode",
-            "Error on adding an node");
-    private static final ConfigKey CONF_DB_ERROR_WAY_COVERT = Config.registerValues("osm.source.error.way.convert",
-            "Error on converting an way");
-    private static final ConfigKey CONF_DB_ERROR_CLEAN_NODES = Config.registerValues("osm.source.error.clean.nodes",
-            "Error on cleaning way covered nodes");
-    private static final ConfigKey CONF_DB_ERROR_BOUNDS = Config.registerValues("osm.source.error.bounds",
-            "Error on retrieving db boundaries");;
+    private static final ConfigKey CONF_DB_ERROR_RESET = Config.registerValues(
+            "osm.source.error.reset", "Error on reset DB");
+    private static final ConfigKey CONF_DB_ERROR_ADDNODE = Config.registerValues(
+            "osm.source.error.addnode", "Error on adding an node");
+    private static final ConfigKey CONF_DB_ERROR_WAY_COVERT = Config.registerValues(
+            "osm.source.error.way.convert", "Error on converting an way");
+    private static final ConfigKey CONF_DB_ERROR_CLEAN_NODES = Config.registerValues(
+            "osm.source.error.clean.nodes", "Error on cleaning way covered nodes");
+    private static final ConfigKey CONF_DB_ERROR_BOUNDS = Config.registerValues(
+            "osm.source.error.bounds", "Error on retrieving db boundaries");
     /**
      * stores the connection
      */
@@ -70,15 +72,26 @@ public class HSQLDriver implements IDataProvider {
         final Statement query;
         try {
             query = c.createStatement();
-            ResultSet result = query.executeQuery("select * from nodes where lat > " + bounds.origin.lat
-                    + " and lat < " + (bounds.origin.lat + bounds.dimension.width) + " and lon > " + bounds.origin.lon
-                    + " and lon < " + (bounds.origin.lon + bounds.dimension.height));
+            ResultSet result = query.executeQuery("select * from nodes where lat > "
+                    + bounds.origin.lat + " and lat < "
+                    + (bounds.origin.lat + bounds.dimension.width) + " and lon > "
+                    + bounds.origin.lon + " and lon < "
+                    + (bounds.origin.lon + bounds.dimension.height));
             int nodes = 0;
+            final Statement getTags = c.createStatement();
             while (result.next()) {
                 if (((Boolean) ThreadLocal.get()).booleanValue()) {
                     return;
                 }
-                receiver.accept(new IDataObject[] { new PoiData(result.getDouble("lat"), result.getDouble("lon"), "Poi") });
+                final ObjectArray tags = new ObjectArray();
+                final ResultSet nodeTags = getTags
+                        .executeQuery("select * from nodetags where nodeid = "
+                                + result.getInt("id"));
+                while (nodeTags.next()) {
+                    tags.add(new Tag(nodeTags.getInt("type"), null, null));
+                }
+                receiver.accept(new IDataObject[] { new PoiData(result.getDouble("lat"), result
+                        .getDouble("lon"), result.getInt("id"), tags.get()) });
                 nodes++;
             }
             Log.notice(CONF_DB_COLLECTED_NODES, new Object[] { Integer.valueOf(nodes) });
@@ -119,12 +132,19 @@ public class HSQLDriver implements IDataProvider {
                 }
                 final Object[] coordPairs = (Object[]) result.getArray("path").getArray();
                 final Double[][] cords = new Double[coordPairs.length / 2][2];
+                final ObjectArray tags = new ObjectArray();
                 for (int i = 0; i < coordPairs.length; i++) {
                     cords[i / 2][0] = (Double) coordPairs[i];
                     cords[i / 2][1] = (Double) coordPairs[i + 1];
                     i++;
                 }
-                receiver.accept(new IDataObject[] { new WayData(cords) });
+                final ResultSet wayTags = getTags
+                        .executeQuery("select * from waytags where wayid = " + result.getInt("id"));
+                while (wayTags.next()) {
+                    tags.add(new Tag(wayTags.getInt("type"), null, null));
+                }
+                receiver.accept(new IDataObject[] { new WayData(result.getInt("id"), cords, tags
+                        .get()) });
                 ways++;
             }
             Log.notice(CONF_DB_COLLECTED_WAYS, new Object[] { Integer.valueOf(ways) });
@@ -148,6 +168,11 @@ public class HSQLDriver implements IDataProvider {
             query.execute("CREATE INDEX waypos ON ways (minlat,minlon,maxlat,maxlon)");
             query.execute("DROP TABLE IF EXISTS waynodes");
             query.execute("CREATE TABLE waynodes (wayid INTEGER, nodeid INTEGER)");
+            // tags
+            query.execute("DROP TABLE IF EXISTS nodetags");
+            query.execute("CREATE TABLE nodetags (tagid IDENTITY, nodeid INTEGER, type INTEGER)");
+            query.execute("DROP TABLE IF EXISTS waytags");
+            query.execute("CREATE TABLE waytags (tagid IDENTITY, wayid INTEGER, type INTEGER)");
         } catch (final SQLException e) {
             throw new LogCritical(CONF_DB_ERROR_RESET, e);
         }
@@ -162,8 +187,22 @@ public class HSQLDriver implements IDataProvider {
         final Statement query;
         try {
             query = c.createStatement();
-            query.execute("INSERT INTO nodes (id,lat,lon) VALUES (" + data.label + "," + data.getPosition().lat + ","
-                    + data.getPosition().lon + ")");
+            query.execute("INSERT INTO nodes (id,lat,lon) VALUES (" + data.osmid + ","
+                    + data.getPosition().lat + "," + data.getPosition().lon + ")");
+            // insert tags
+            if (data.getTags().length > 0) {
+                final StringBuilder inserTags = new StringBuilder(
+                        "INSERT INTO nodetags (nodeid,type) VALUES (");
+                for (int i = 0; i < data.getTags().length; i++) {
+                    if (i > 0) {
+                        inserTags.append(",");
+                    }
+                    final Tag tag = (Tag) data.getTags()[i];
+                    inserTags.append("(" + data.osmid + "," + tag.type + ")");
+                }
+                inserTags.append(")");
+                query.execute(inserTags.toString());
+            }
             query.close();
         } catch (final SQLException e) {
             throw new LogCritical(CONF_DB_ERROR_ADDNODE, e);
@@ -177,8 +216,9 @@ public class HSQLDriver implements IDataProvider {
      * @param id
      * @param nodes
      */
-    public void convertWay(final int id, final List nodes) {
+    public void convertWay(final int id, final List nodes, final Object[] tags) {
         final Statement query;
+        // TODO support for nodetags, the ways childs
         String qstr = null;
         try {
             query = c.createStatement();
@@ -186,7 +226,8 @@ public class HSQLDriver implements IDataProvider {
             final Boundary maxmin = new Boundary(new char[] { '<', '<', '>', '>' });
             for (int i = 0; i < nodes.size(); i++) {
                 final Object nodeId = nodes.get(i);
-                final ResultSet result = query.executeQuery("SELECT * FROM nodes WHERE id = " + nodeId.toString());
+                final ResultSet result = query.executeQuery("SELECT * FROM nodes WHERE id = "
+                        + nodeId.toString());
                 if (result.next()) {
                     if (path.length() > 0) {
                         path.append(",");
@@ -200,15 +241,31 @@ public class HSQLDriver implements IDataProvider {
                     // throw new
                     // IllegalStateException("Way referenced node is not in DB");
                 }
-                query.execute("INSERT INTO waynodes (wayid,nodeid) VALUES (" + id + "," + nodeId.toString() + ")");
+                query.execute("INSERT INTO waynodes (wayid,nodeid) VALUES (" + id + ","
+                        + nodeId.toString() + ")");
             }
-            qstr = "INSERT INTO ways (id,minlat,minlon,maxlat,maxlon,path) VALUES (" + id + "," + maxmin.values[0]
-                    + "," + maxmin.values[1] + "," + maxmin.values[2] + "," + maxmin.values[3] + ", ARRAY[" + path
-                    + "])";
+            qstr = "INSERT INTO ways (id,minlat,minlon,maxlat,maxlon,path) VALUES (" + id + ","
+                    + maxmin.values[0] + "," + maxmin.values[1] + "," + maxmin.values[2] + ","
+                    + maxmin.values[3] + ", ARRAY[" + path + "])";
             query.execute(qstr);
+            // insert tags
+            if (tags.length > 0) {
+                final StringBuilder inserTags = new StringBuilder(
+                        "INSERT INTO waytags (wayid,type) VALUES (");
+                for (int i = 0; i < tags.length; i++) {
+                    if (i > 0) {
+                        inserTags.append(",");
+                    }
+                    final Tag tag = (Tag) tags[i];
+                    inserTags.append("(" + id + "," + tag.type + ")");
+                }
+                inserTags.append(")");
+                query.execute(inserTags.toString());
+            }
             query.close();
         } catch (final SQLException e) {
-            throw new LogCritical(CONF_DB_ERROR_WAY_COVERT, e, new Object[] { Integer.valueOf(id), nodes, qstr });
+            throw new LogCritical(CONF_DB_ERROR_WAY_COVERT, e, new Object[] { Integer.valueOf(id),
+                    nodes, qstr });
         }
     }
 
@@ -248,11 +305,12 @@ public class HSQLDriver implements IDataProvider {
                     result = query.executeQuery("SELECT lon FROM nodes ORDER BY lon LIMIT 1");
                     if (result.next()) {
                         final double minLon = result.getDouble("lon");
-                        result = query.executeQuery("SELECT lon FROM nodes ORDER BY lon DESC LIMIT 1");
+                        result = query
+                                .executeQuery("SELECT lon FROM nodes ORDER BY lon DESC LIMIT 1");
                         if (result.next()) {
                             final double maxLon = result.getDouble("lon");
-                            return new Rectangle(new Point(minLat, minLon), new Dimension(maxLat - minLat, maxLon
-                                    - minLon));
+                            return new Rectangle(new Point(minLat, minLon), new Dimension(maxLat
+                                    - minLat, maxLon - minLon));
                         }
                     }
                 }

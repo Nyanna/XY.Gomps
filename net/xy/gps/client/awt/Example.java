@@ -2,6 +2,10 @@ package net.xy.gps.client.awt;
 
 import java.awt.Color;
 import java.awt.Frame;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
+import java.awt.RenderingHints;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
@@ -13,20 +17,25 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import net.xy.codebasel.Log;
 import net.xy.codebasel.ThreadLocal;
 import net.xy.codebasel.Utils;
 import net.xy.codebasel.config.Config;
 import net.xy.codebasel.config.Config.ConfigKey;
-import net.xy.gps.data.IDataObject;
+import net.xy.codebasel.config.TextPropertyRetriever;
 import net.xy.gps.data.IDataProvider;
-import net.xy.gps.data.IDataProvider.IDataReceiver;
 import net.xy.gps.data.driver.HSQLDriver;
 import net.xy.gps.data.driver.TileDriver;
-import net.xy.gps.render.ILayer;
-import net.xy.gps.render.layer.StatLayer;
+import net.xy.gps.render.layer.PriorityDataReceiver;
+import net.xy.gps.render.layer.PriorityDataReceiver.CreateLayersCallback;
+import net.xy.gps.render.layer.ZoomAreaLayer;
 import net.xy.gps.render.layer.ZoomNodeLayer;
 import net.xy.gps.render.layer.ZoomWayLayer;
 import net.xy.gps.render.perspective.Action2DView;
@@ -34,6 +43,10 @@ import net.xy.gps.type.Rectangle;
 
 public class Example {
     private static final long serialVersionUID = -6720509574401297090L;
+
+    /**
+     * configuration
+     */
     public static final int CONF_DATAPROVIDER_DB = 0; // conf const
     public static final int CONF_DATAPROVIDER_TILES = 1; // conf const
     private static final ConfigKey CONF_TEXT_LAYERS_CLEARED = Config.registerValues(
@@ -41,12 +54,12 @@ public class Example {
     protected static final ConfigKey CONF_TEXT_IN_DATA = Config.registerValues(
             "main.state.in.data", "Accepting new data from provider");
     protected static final ConfigKey CONF_DATA_PROVIDER = Config.registerValues(
-            "main.dataprovider", Integer.valueOf(CONF_DATAPROVIDER_TILES));
+            "main.dataprovider", Integer.valueOf(CONF_DATAPROVIDER_DB));
 
     private static final Frame MAIN = new Frame("XY.GpsMid");
     private static final Color BGND = new Color(0, 0, 0);
     static {
-        MAIN.setSize(400, 400);
+        MAIN.setSize(400, 300);
         MAIN.setBackground(BGND);
     }
     /**
@@ -59,9 +72,8 @@ public class Example {
     /**
      * layers should store and cache as much as possible
      */
-    private final ILayer wayLayer = new ZoomWayLayer(perspective);
-    private final ILayer nodeLayer = new ZoomNodeLayer(perspective);
-    private final ILayer[] layers = new ILayer[] { new StatLayer(perspective), nodeLayer, wayLayer };
+    private PriorityDataReceiver dataReceiver = null;
+    private static final Example main = new Example();
 
     /**
      * move indicators
@@ -76,10 +88,9 @@ public class Example {
     private boolean shouldRepaint = false;
     private static Thread paint;
     private static Thread db;
-    private static final Example main = new Example();
 
     public Example() {
-        if (Config.getInteger(CONF_DATA_PROVIDER).intValue() == CONF_DATAPROVIDER_DB) {
+        if (Config.getInteger(CONF_DATA_PROVIDER).intValue() == CONF_DATAPROVIDER_TILES) {
             try {
                 data = new HSQLDriver();
             } catch (final SQLException e1) {
@@ -88,10 +99,6 @@ public class Example {
             }
         } else {
             data = new TileDriver();
-        }
-        for (int i = 0; i < layers.length; i++) {
-            final ILayer layer = layers[i];
-            perspective.addLayer(layer);
         }
         MAIN.addComponentListener(new ComponentAdapter() {
             public void componentResized(final ComponentEvent e) {
@@ -214,10 +221,30 @@ public class Example {
 
     public static void main(final String[] args) {
         Config.addDefaultRetrievers(args);
+        try {
+            Config.addRetriever(new TextPropertyRetriever("net/xy/gps/render/priorities.properties"));
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
         MAIN.setVisible(true);
-        final AwtListener listener = new AwtListener(MAIN.getGraphics(), main.perspective);
+        final Graphics g = MAIN.getGraphics();
+        if (g instanceof Graphics2D) {
+            final Graphics2D g2 = (Graphics2D) g;
+            g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        }
+        final AwtListener listener = new AwtListener(g, main.perspective);
         main.perspective.setListener(listener);
-        // final GraphicsConfiguration gfxCfg = MAIN.getGraphicsConfiguration();
+        main.dataReceiver = new PriorityDataReceiver(main.perspective, new CreateLayersCallback() {
+            public Collection createLayerSet() {
+                final List res = new ArrayList();
+                res.add(new ZoomAreaLayer(main.perspective));
+                res.add(new ZoomWayLayer(main.perspective));
+                res.add(new ZoomNodeLayer(main.perspective));
+                return res;
+            }
+        });
+        final GraphicsConfiguration gfxCfg = MAIN.getGraphicsConfiguration();
         db = new Thread(new Runnable() {
             private Rectangle oldRect = null;
 
@@ -227,10 +254,13 @@ public class Example {
                     final Rectangle actual = main.perspective.getViewPort();
                     if (oldRect == null || !oldRect.equals(actual)) {
                         oldRect = actual;
-                        main.updateObjects();
+                        Log.notice(CONF_TEXT_LAYERS_CLEARED);
+                        main.data.get(main.perspective.getViewPort(), main.dataReceiver);
+                        main.shouldRepaint = true;
+                        ThreadLocal.set(Boolean.TRUE, paint);
                     }
                     if (!((Boolean) ThreadLocal.get()).booleanValue()) {
-                        Utils.sleep(1000);
+                        Utils.sleep(200);
                     }
                 }
             }
@@ -239,13 +269,19 @@ public class Example {
         db.setPriority(Thread.MIN_PRIORITY);
         db.start();
         paint = new Thread(new Runnable() {
-
             public void run() {
                 while (true) {
                     ThreadLocal.set(Boolean.FALSE);
                     if (main.shouldRepaint) {
                         main.shouldRepaint = false;
-                        listener.update();
+                        if (false) {
+                            final BufferedImage buffer = gfxCfg.createCompatibleImage(
+                                    MAIN.getWidth(), MAIN.getHeight());
+                            listener.update(buffer.getGraphics());
+                            MAIN.getGraphics().drawImage(buffer, 0, 0, null);
+                        } else {
+                            listener.update(MAIN.getGraphics());
+                        }
                     }
                     if (!((Boolean) ThreadLocal.get()).booleanValue()) {
                         Utils.sleep(40);
@@ -253,6 +289,7 @@ public class Example {
                 }
             }
         }, "PaintThread");
+        // TODO [LAST] implement way width in meters and border handling
         paint.setDaemon(true);
         paint.setPriority(Thread.MIN_PRIORITY);
         paint.start();
@@ -304,23 +341,5 @@ public class Example {
         shouldRepaint = true;
         ThreadLocal.set(Boolean.TRUE, paint);
         ThreadLocal.set(Boolean.TRUE, db);
-    }
-
-    private void updateObjects() {
-        nodeLayer.clear();
-        // wayLayer.clear();
-        Log.notice(CONF_TEXT_LAYERS_CLEARED);
-        data.get(perspective.getViewPort(), new IDataReceiver() {
-
-            public void accept(final Object[] data) {
-                Log.notice(CONF_TEXT_IN_DATA, new Object[] { Integer.valueOf(data.length) });
-                for (int i = 0; i < data.length; i++) {
-                    final Object dat = data[i];
-                    // do sorting and insertion into layers
-                    nodeLayer.addObject((IDataObject) dat);
-                    wayLayer.addObject((IDataObject) dat);
-                }
-            }
-        });
     }
 }

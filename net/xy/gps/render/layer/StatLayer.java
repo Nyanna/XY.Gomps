@@ -33,7 +33,10 @@ public class StatLayer extends SimpleLayer implements ILayer {
 
     public void clear() {}
 
-    void draw(final IDataObject robj) {
+    protected void draw(final IDataObject robj) {
+        if (listener == null) {
+            return;
+        }
         final Double lon1 = Double.valueOf(parent.getViewPort().origin.lon + parent.getViewPort().dimension.height
                 * 0.02);
         final Double lat1 = Double.valueOf(parent.getViewPort().origin.lat + parent.getViewPort().dimension.width

@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import net.xy.codebasel.ObjectArray;
-import net.xy.gps.data.tag.Tag.SimpleCondition;
+import net.xy.gps.data.tag.TagConfiguration.ITagListener;
 
 /**
  * an factory for conversion and relative typehandling of tags
@@ -16,54 +16,63 @@ import net.xy.gps.data.tag.Tag.SimpleCondition;
  * @author Xyan
  * 
  */
-public class TagFactory {
+public class TagFactory implements ITagListener {
     /**
      * map of key+val => Tag or List<Tag>
      */
     private static final Map simpleMatch = new HashMap();
+    /**
+     * all registered tags
+     */
+    private static final Map tagList = new HashMap();
+    static {
+        // load tags
+        Tags.Streets.class.toString();
+        Tags.Signs.class.toString();
+        Tags.TraficAreas.class.toString();
+    }
 
     /**
-     * creates an simple key value based matcher for an tag
+     * find all possible tags to an DataObject node,way,or area
      * 
-     * @param key
-     * @param value
+     * @param objType
+     * @param tags
      * @return
      */
-    public static Tag simple(final int idx, final String key, final String value, final int nodeType) {
-        final Tag res = new Tag(idx, new SimpleCondition(key, value));
-        final String hash = key + value + nodeType;
-
+    public static int[] getTags(final int objType, final Map tags) {
+        final ObjectArray res = new ObjectArray();
         // first simple calculation strategy
+        for (final Iterator iterator = tags.entrySet().iterator(); iterator.hasNext();) {
+            final Entry entry = (Entry) iterator.next();
+            final String hash = entry.getKey().toString() + entry.getValue().toString() + objType;
+            final List tagsList = (List) simpleMatch.get(hash);
+            if (tagsList != null) {
+                for (final Iterator iterator2 = tagsList.iterator(); iterator2.hasNext();) {
+                    res.add(Integer.valueOf(((Tag) iterator2.next()).type));
+                }
+            }
+        }
+        return res.get();
+    }
+
+    public static Tag getTag(final int i) {
+        return (Tag) tagList.get(Integer.valueOf(i));
+    }
+
+    public void registerTag(final net.xy.gps.data.tag.impl.Tag tag) {
+        // put in index
+        tagList.put(Integer.valueOf(tag.id), tag);
+        // first simple calculation strategy
+        final String hash = key + value + nodeType;
         List check = (List) simpleMatch.get(hash);
         if (check == null) {
             check = new ArrayList();
             simpleMatch.put(hash, check);
         }
         check.add(res);
-        return res;
     }
 
-    /**
-     * find all possible tags to an DataObject node,way,or area
-     * 
-     * @param nodeType
-     * @param tags
-     * @return
-     */
-    public static Object[] getTags(final int nodeType, final Map tags) {
-        final ObjectArray res = new ObjectArray();
-        // first simple calculation strategy
-        for (final Iterator iterator = tags.entrySet().iterator(); iterator.hasNext();) {
-            final Entry entry = (Entry) iterator.next();
-            final String hash = entry.getKey().toString() + entry.getValue().toString() + nodeType;
-            final List tagsList = (List) simpleMatch.get(hash);
-            if (tagsList != null) {
-                for (final Iterator iterator2 = tagsList.iterator(); iterator2.hasNext();) {
-                    final Tag tag = (Tag) iterator2.next();
-                    res.add(tag);
-                }
-            }
-        }
-        return res.get();
+    public void accept(final net.xy.gps.data.tag.impl.Tag tag) {
+        registerTag(tag);
     }
 }
