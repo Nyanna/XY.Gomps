@@ -17,19 +17,18 @@ public class DrawPoly implements IDrawAction {
     /**
      * stores path color
      */
-    public final int[] color;
+    public final Integer[] color;
 
     /**
      * default constructor
      * 
      * @param path
      */
-    public DrawPoly(final Double[][] path, final int[] color) {
+    public DrawPoly(final Double[][] path, final Integer[] color) {
         this.path = path;
         this.color = color;
     }
 
-    
     public int getType() {
         return IDrawAction.ACTION_WAY;
     }

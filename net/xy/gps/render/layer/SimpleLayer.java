@@ -23,7 +23,8 @@ public abstract class SimpleLayer implements ILayer {
     /**
      * base builtin colors
      */
-    protected static final int[] BASERGB = new int[] { 0, 0, 0, 100 };
+    protected static final Integer[] BASERGB = new Integer[] { Integer.valueOf(0),
+            Integer.valueOf(0), Integer.valueOf(0), Integer.valueOf(100) };
     /**
      * draw event listener
      */

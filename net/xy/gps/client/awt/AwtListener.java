@@ -72,7 +72,8 @@ public class AwtListener implements ActionListener {
                                       // of view
                     break;
                 }
-                g.setColor(new Color(point.color[0], point.color[1], point.color[2], point.color[3]));
+                g.setColor(new Color(point.color[0].intValue(), point.color[1].intValue(),
+                        point.color[2].intValue(), point.color[3].intValue()));
                 g.drawRect(x - 2, y - 2, 4, 4);
                 break;
             case IDrawAction.ACTION_AREA:
@@ -83,7 +84,8 @@ public class AwtListener implements ActionListener {
                     nx[i] = canvas.getX(area.path[i][1].doubleValue());
                     ny[i] = canvas.getY(area.path[i][0].doubleValue());
                 }
-                g.setColor(new Color(area.color[0], area.color[1], area.color[2], area.color[3]));
+                g.setColor(new Color(area.color[0].intValue(), area.color[1].intValue(),
+                        area.color[2].intValue(), area.color[3].intValue()));
                 if (area.fill) {
                     g.fillPolygon(nx, ny, area.path.length);
                 } else {
@@ -103,14 +105,16 @@ public class AwtListener implements ActionListener {
                     g2.setStroke(new BasicStroke(2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND,
                             BasicStroke.JOIN_ROUND));
                 }
-                g.setColor(new Color(poly.color[0], poly.color[1], poly.color[2], poly.color[3]));
+                g.setColor(new Color(poly.color[0].intValue(), poly.color[1].intValue(),
+                        poly.color[2].intValue(), poly.color[3].intValue()));
                 g.drawPolyline(px, py, poly.path.length);
                 break;
             case IDrawAction.ACTION_TEXT:
                 final DrawText text = (DrawText) action;
                 final int tx = canvas.getX(text.lon);
                 final int ty = canvas.getY(text.lat);
-                g.setColor(new Color(text.color[0], text.color[1], text.color[2], text.color[3]));
+                g.setColor(new Color(text.color[0].intValue(), text.color[1].intValue(),
+                        text.color[2].intValue(), text.color[3].intValue()));
                 g.drawString(text.text, tx, ty);
                 break;
             }

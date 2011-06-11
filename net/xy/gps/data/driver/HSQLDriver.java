@@ -11,7 +11,6 @@ import net.xy.codebasel.Log;
 import net.xy.codebasel.LogCritical;
 import net.xy.codebasel.LogError;
 import net.xy.codebasel.LogWarning;
-import net.xy.codebasel.ObjectArray;
 import net.xy.codebasel.ThreadLocal;
 import net.xy.codebasel.config.Config;
 import net.xy.codebasel.config.Config.ConfigKey;
@@ -83,15 +82,17 @@ public class HSQLDriver implements IDataProvider {
                 if (((Boolean) ThreadLocal.get()).booleanValue()) {
                     return;
                 }
-                final ObjectArray tags = new ObjectArray();
                 final ResultSet nodeTags = getTags
                         .executeQuery("select * from nodetags where nodeid = "
                                 + result.getInt("id"));
+                nodeTags.last();
+                final Integer[] tags = new Integer[nodeTags.getRow()];
+                nodeTags.first();
                 while (nodeTags.next()) {
-                    tags.add(new Tag(nodeTags.getInt("type"), null, null));
+                    tags[nodeTags.getRow() - 1] = Integer.valueOf(nodeTags.getInt("type"));
                 }
                 receiver.accept(new IDataObject[] { new PoiData(result.getDouble("lat"), result
-                        .getDouble("lon"), result.getInt("id"), tags.get()) });
+                        .getDouble("lon"), result.getInt("id"), tags) });
                 nodes++;
             }
             Log.notice(CONF_DB_COLLECTED_NODES, new Object[] { Integer.valueOf(nodes) });
@@ -132,7 +133,6 @@ public class HSQLDriver implements IDataProvider {
                 }
                 final Object[] coordPairs = (Object[]) result.getArray("path").getArray();
                 final Double[][] cords = new Double[coordPairs.length / 2][2];
-                final ObjectArray tags = new ObjectArray();
                 for (int i = 0; i < coordPairs.length; i++) {
                     cords[i / 2][0] = (Double) coordPairs[i];
                     cords[i / 2][1] = (Double) coordPairs[i + 1];
@@ -140,11 +140,13 @@ public class HSQLDriver implements IDataProvider {
                 }
                 final ResultSet wayTags = getTags
                         .executeQuery("select * from waytags where wayid = " + result.getInt("id"));
+                wayTags.last();
+                final Integer[] tags = new Integer[wayTags.getRow()];
+                wayTags.first();
                 while (wayTags.next()) {
-                    tags.add(new Tag(wayTags.getInt("type"), null, null));
+                    tags[wayTags.getRow() - 1] = Integer.valueOf(wayTags.getInt("type"));
                 }
-                receiver.accept(new IDataObject[] { new WayData(result.getInt("id"), cords, tags
-                        .get()) });
+                receiver.accept(new IDataObject[] { new WayData(result.getInt("id"), cords, tags) });
                 ways++;
             }
             Log.notice(CONF_DB_COLLECTED_WAYS, new Object[] { Integer.valueOf(ways) });
@@ -197,8 +199,7 @@ public class HSQLDriver implements IDataProvider {
                     if (i > 0) {
                         inserTags.append(",");
                     }
-                    final Tag tag = (Tag) data.getTags()[i];
-                    inserTags.append("(" + data.osmid + "," + tag.type + ")");
+                    inserTags.append("(" + data.osmid + "," + data.getTags()[i] + ")");
                 }
                 inserTags.append(")");
                 query.execute(inserTags.toString());
@@ -257,7 +258,7 @@ public class HSQLDriver implements IDataProvider {
                         inserTags.append(",");
                     }
                     final Tag tag = (Tag) tags[i];
-                    inserTags.append("(" + id + "," + tag.type + ")");
+                    inserTags.append("(" + id + "," + tag.id + ")");
                 }
                 inserTags.append(")");
                 query.execute(inserTags.toString());

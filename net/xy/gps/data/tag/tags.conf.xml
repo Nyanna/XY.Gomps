@@ -1,16 +1,659 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <tags>
-	<tag name="Boundary/Administration" priority="1" enabled="true">
-		<style fill="true" color="249,90,79,100"/>
+	<!-- Streets and Ways -->
+	<tag name="Highway/Motorway" priority="15" enabled="true">
+		<style fill="false" color="128,155,192,100"/>
 		<conditions>
-			<tagmatch key="boundary" value="administrative" type="way"/>
+			<tagmatch key="highway" value="motorway" type="way"/>
 		</conditions>
 	</tag>
-	<tag name="Example" priority="10" enabled="true">
-		<style fill="true" color="49,290,179,100"/>
+	<tag name="Highway/Motorway-Link" priority="15" enabled="true">
+		<style fill="false" color="143,174,214,100"/>
+		<conditions>
+			<tagmatch key="highway" value="motorway_link" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Highway/Trunk" priority="16" enabled="true">
+		<style fill="false" color="127,201,127,100"/>
+		<conditions>
+			<tagmatch key="highway" value="trunk" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Highway/Trunk-Link" priority="16" enabled="true">
+		<style fill="false" color="168,218,168,100"/>
+		<conditions>
+			<tagmatch key="highway" value="trunk_link" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Highway/Primary" priority="17" enabled="true">
+		<style fill="false" color="228,109,113,100"/>
+		<conditions>
+			<tagmatch key="highway" value="primary" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Highway/Primary-Link" priority="17" enabled="true">
+		<style fill="false" color="228,109,113,100"/>
+		<conditions>
+			<tagmatch key="highway" value="primary_link" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Highway/Secondary" priority="18" enabled="true">
+		<style fill="false" color="253,191,111,100"/>
+		<conditions>
+			<tagmatch key="highway" value="secondary" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Highway/Secondary-Link" priority="18" enabled="true">
+		<style fill="false" color="253,191,111,100"/>
+		<conditions>
+			<tagmatch key="highway" value="secondary_link" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Highway/Tertiary" priority="19" enabled="true">
+		<style fill="false" color="252,250,116,100"/>
+		<conditions>
+			<tagmatch key="highway" value="tertiary" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Highway/Residential" priority="20" enabled="true">
+		<style fill="false" color="201,201,201,100"/>
+		<conditions>
+			<tagmatch key="highway" value="residential" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Highway/Unclassified" priority="21" enabled="true">
+		<style fill="false" color="219,219,219,100"/>
+		<conditions>
+			<tagmatch key="highway" value="unclassified" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Highway/Road" priority="18" enabled="true">
+		<style fill="false" color="219,219,219,100"/>
+		<conditions>
+			<tagmatch key="highway" value="road" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Highway/Living" priority="22" enabled="true">
+		<style fill="false" color="248,198,193,100"/>
+		<conditions>
+			<tagmatch key="highway" value="living_street" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Highway/Service" priority="22" enabled="true">
+		<style fill="false" color="219,219,219,100"/>
+		<conditions>
+			<tagmatch key="highway" value="service" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Highway/Track" priority="22" enabled="true">
+		<style fill="false" color="219,219,219,100"/>
+		<conditions>
+			<tagmatch key="highway" value="track" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Highway/Pedestrian" priority="22" enabled="true">
+		<style fill="true" color="203,238,173,100"/>
 		<conditions>
 			<orCondition>
-				<tagmatch key="boundary" value="administrative" type="way"/>
+				<tagmatch key="highway" value="pedestrian" type="way"/>
+				<tagmatch key="highway" value="pedestrian" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Highway/Raceway" priority="50" enabled="false">
+		<style fill="false" color="0,0,0,100"/>
+		<conditions>
+			<tagmatch key="highway" value="raceway" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Highway/Services" priority="22" enabled="true">
+		<style fill="false" color="206,182,182,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="highway" value="services" type="way"/>
+				<tagmatch key="highway" value="services" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Highway/Bus" priority="50" enabled="true">
+		<style fill="false" color="247,81,103,100"/>
+		<conditions>
+			<tagmatch key="highway" value="bus_guideway" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Path/Way" priority="23" enabled="true">
+		<style fill="false" color="167,198,154,100"/>
+		<conditions>
+			<tagmatch key="highway" value="path" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Path/Cycleway" priority="23" enabled="true">
+		<style fill="false" color="167,198,154,100"/>
+		<conditions>
+			<tagmatch key="highway" value="cycleway" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Path/Footway" priority="23" enabled="true">
+		<style fill="false" color="224,182,124,100"/>
+		<conditions>
+			<tagmatch key="highway" value="footway" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Path/Bridleway" priority="23" enabled="true">
+		<style fill="false" color="112,185,113,100"/>
+		<conditions>
+			<tagmatch key="highway" value="bridleway" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Path/Byway" priority="22" enabled="true">
+		<style fill="false" color="250,222,109,100"/>
+		<conditions>
+			<tagmatch key="highway" value="byway" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Path/Steps" priority="23" enabled="true">
+		<style fill="false" color="191,187,167,100"/>
+		<conditions>
+			<tagmatch key="highway" value="steps" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Intersection/Mini-Roundabout" priority="23" enabled="true">
+		<style fill="false" color="0,0,0,100"/>
+		<conditions>
+			<tagmatch key="highway" value="mini_roundabout" type="point"/>
+		</conditions>
+	</tag>
+	<tag name="Intersection/Sign-Stop" priority="70" enabled="false">
+		<style fill="false" color="0,0,0,100"/>
+		<conditions>
+			<tagmatch key="highway" value="stop" type="point"/>
+		</conditions>
+	</tag>
+	<tag name="Intersection/Sign-Giveaway" priority="70" enabled="false">
+		<style fill="false" color="0,0,0,100"/>
+		<conditions>
+			<tagmatch key="highway" value="give_way" type="point"/>
+		</conditions>
+	</tag>
+	<tag name="Intersection/Signals" priority="70" enabled="true">
+		<style fill="false" color="0,0,0,100"/>
+		<conditions>
+			<tagmatch key="highway" value="traffic_signals" type="point"/>
+		</conditions>
+	</tag>
+	<tag name="Intersection/Crossing" priority="23" enabled="true">
+		<style fill="false" color="255,255,255,100"/>
+		<conditions>
+			<tagmatch key="highway" value="crossing" type="point"/>
+		</conditions>
+	</tag>
+	<tag name="Intersection/Roundabout" priority="17" enabled="true">
+		<style fill="true" color="0,0,0,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="junction" value="roundabout" type="way"/>
+				<tagmatch key="junction" value="roundabout" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Intersection/Motorway-Exit" priority="16" enabled="true">
+		<style fill="false" color="0,0,0,100"/>
+		<conditions>
+			<tagmatch key="highway" value="motorway_junction" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Other/Ford" priority="50" enabled="true">
+		<style fill="false" color="166,167,188,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="highway" value="ford" type="point"/>
+				<tagmatch key="highway" value="ford" type="way"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Other/Busstop" priority="25" enabled="true">
+		<style fill="false" color="139,135,123,100"/>
+		<conditions>
+			<tagmatch key="highway" value="bus_stop" type="point"/>
+		</conditions>
+	</tag>
+	<tag name="Other/Busstation" priority="26" enabled="true">
+		<style fill="true" color="139,135,123,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="public_transport" value="platform" type="point"/>
+				<tagmatch key="public_transport" value="platform" type="way"/>
+				<tagmatch key="public_transport" value="platform" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Other/Turning-Cycle" priority="19" enabled="true">
+		<style fill="false" color="0,0,0,100"/>
+		<conditions>
+			<tagmatch key="highway" value="turning_circle" type="point"/>
+		</conditions>
+	</tag>
+	<tag name="Other/Under-Construction" priority="18" enabled="true">
+		<style fill="false" color="0,0,0,100"/>
+		<conditions>
+			<tagmatch key="highway" value="construction" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Other/Planed" priority="50" enabled="false">
+		<style fill="false" color="0,0,0,100"/>
+		<conditions>
+			<tagmatch key="highway" value="proposed" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Other/Point-Emergency" priority="70" enabled="true">
+		<style fill="false" color="0,0,0,100"/>
+		<conditions>
+			<tagmatch key="highway" value="emergency_access_point" type="point"/>
+		</conditions>
+	</tag>
+	<tag name="Other/Camera" priority="15" enabled="true">
+		<style fill="false" color="0,0,0,100"/>
+		<conditions>
+			<tagmatch key="highway" value="speed_camera" type="point"/>
+		</conditions>
+	</tag>
+	<tag name="Other/Lamp" priority="100" enabled="false">
+		<style fill="false" color="0,0,0,100"/>
+		<conditions>
+			<tagmatch key="highway" value="street_lamp" type="point"/>
+		</conditions>
+	</tag>
+	<!-- Waterways -->
+	<tag name="Waterways/Common" priority="30" enabled="true">
+		<style fill="false" color="181,214,241"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="waterway" value="stream" type="way"/>
+				<tagmatch key="waterway" value="river" type="way"/>
+				<tagmatch key="waterway" value="riverbank" type="area"/>
+				<tagmatch key="waterway" value="canal" type="way"/>
+				<tagmatch key="waterway" value="ditch" type="way"/>
+				<tagmatch key="waterway" value="drain" type="way"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Waterways/Dock" priority="100" enabled="true">
+		<style fill="true" color="200,200,200,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="waterway" value="dock" type="point"/>
+				<tagmatch key="waterway" value="dock" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Waterways/Gate" priority="100" enabled="true">
+		<style fill="false" color="0,0,0,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="waterway" value="lock_gate" type="point"/>
+				<tagmatch key="lock" value="yes" type="point"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Waterways/Point-Turning" priority="100" enabled="true">
+		<style fill="false" color="0,0,0,100"/>
+		<conditions>
+			<tagmatch key="waterway" value="turning_point" type="point"/>
+		</conditions>
+	</tag>
+	<tag name="Waterways/Yard" priority="100" enabled="true">
+		<style fill="false" color="0,0,0,100"/>
+		<conditions>
+			<tagmatch key="waterway" value="boatyard" type="point"/>
+		</conditions>
+	</tag>
+	<tag name="Waterways/Weir" priority="50" enabled="true">
+		<style fill="false" color="0,0,0,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="waterway" value="weir" type="point"/>
+				<tagmatch key="waterway" value="weir" type="way"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Waterways/Dam" priority="100" enabled="true">
+		<style fill="false" color="200,200,200,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="waterway" value="dam" type="way"/>
+				<tagmatch key="waterway" value="dam" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<!-- Nature -->
+	<tag name="Natural/Bay" priority="40" enabled="true">
+		<style fill="true" color="213,227,239,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="natural" value="bay" type="point"/>
+				<tagmatch key="natural" value="bay" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Natural/Beach" priority="30" enabled="true">
+		<style fill="true" color="238,204,85,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="natural" value="beach" type="point"/>
+				<tagmatch key="natural" value="beach" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Natural/Cave-Entrance" priority="50" enabled="true">
+		<style fill="true" color="0,0,0,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="natural" value="cave_entrance" type="point"/>
+				<tagmatch key="natural" value="cave_entrance" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Natural/Cliff" priority="35" enabled="true">
+		<style fill="true" color="153,153,153,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="natural" value="cliff" type="point"/>
+				<tagmatch key="natural" value="cliff" type="way"/>
+				<tagmatch key="natural" value="cliff" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Natural/Coastline" priority="35" enabled="true">
+		<style fill="true" color="181,214,241,100"/>
+		<conditions>
+			<tagmatch key="natural" value="coastline" type="way"/>
+		</conditions>
+	</tag>
+	<tag name="Natural/Fell" priority="35" enabled="true">
+		<style fill="true" color="221,212,236,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="natural" value="fell" type="point"/>
+				<tagmatch key="natural" value="fell" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Natural/Glacier" priority="35" enabled="true">
+		<style fill="true" color="221,236,236,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="natural" value="glacier" type="point"/>
+				<tagmatch key="natural" value="glacier" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Natural/Heath" priority="35" enabled="true">
+		<style fill="true" color="255,255,192,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="natural" value="heath" type="point"/>
+				<tagmatch key="natural" value="heath" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Natural/Land" priority="30" enabled="true">
+		<style fill="true" color="255,255,255,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="natural" value="land" type="point"/>
+				<tagmatch key="natural" value="land" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Natural/Marsh" priority="31" enabled="true">
+		<style fill="true" color="13,137,255,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="natural" value="marsh" type="point"/>
+				<tagmatch key="natural" value="marsh" type="area"/>
+				<tagmatch key="natural" value="wetland" type="point"/>
+				<tagmatch key="natural" value="wetland" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Natural/Mud" priority="35" enabled="true">
+		<style fill="true" color="229,219,208,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="natural" value="mud" type="point"/>
+				<tagmatch key="natural" value="mud" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Natural/Peak" priority="100" enabled="true">
+		<style fill="false" color="0,0,0,100"/>
+		<conditions>
+			<tagmatch key="natural" value="peak" type="point"/>
+		</conditions>
+	</tag>
+	<tag name="Natural/Sand" priority="35" enabled="true">
+		<style fill="true" color="255,255,214,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="natural" value="sand" type="point"/>
+				<tagmatch key="natural" value="sand" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Natural/Scree" priority="35" enabled="true">
+		<style fill="true" color="167,167,168,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="natural" value="scree" type="point"/>
+				<tagmatch key="natural" value="scree" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Natural/Scrub" priority="35" enabled="true">
+		<style fill="true" color="114,191,129,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="natural" value="scrub" type="point"/>
+				<tagmatch key="natural" value="scrub" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Natural/Spring" priority="100" enabled="true">
+		<style fill="false" color="0,0,0,100"/>
+		<conditions>
+			<tagmatch key="natural" value="spring" type="point"/>
+		</conditions>
+	</tag>
+	<tag name="Natural/Stone" priority="100" enabled="true">
+		<style fill="false" color="0,0,0,100"/>
+		<conditions>
+			<tagmatch key="natural" value="stone" type="point"/>
+		</conditions>
+	</tag>
+	<tag name="Natural/Tree" priority="100" enabled="true">
+		<style fill="false" color="0,0,0,100"/>
+		<conditions>
+			<tagmatch key="natural" value="tree" type="point"/>
+		</conditions>
+	</tag>
+	<tag name="Natural/Volcano" priority="100" enabled="true">
+		<style fill="false" color="0,0,0,100"/>
+		<conditions>
+			<tagmatch key="natural" value="volcano" type="point"/>
+		</conditions>
+	</tag>
+	<tag name="Natural/Water" priority="30" enabled="true">
+		<style fill="true" color="181,214,241,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="natural" value="water" type="point"/>
+				<tagmatch key="natural" value="water" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Natural/Wood" priority="30" enabled="true">
+		<style fill="true" color="114,191,129,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="natural" value="wood" type="point"/>
+				<tagmatch key="natural" value="wood" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<!-- Boundaries -->
+	<tag name="Boundary/Administrative" priority="1" enabled="true">
+		<style fill="false" color="249,90,79,100"/>
+		<conditions>
+			<tagmatch key="boundary" value="administrative" type="area"/>
+		</conditions>
+	</tag>
+	<tag name="Boundary/Civil" priority="50" enabled="true">
+		<style fill="false" color="233,233,233,100"/>
+		<conditions>
+			<tagmatch key="boundary" value="civil" type="area"/>
+		</conditions>
+	</tag>
+	<tag name="Boundary/Political" priority="50" enabled="true">
+		<style fill="false" color="233,233,233,100"/>
+		<conditions>
+			<tagmatch key="boundary" value="political" type="area"/>
+		</conditions>
+	</tag>
+	<tag name="Boundary/Maritime" priority="1" enabled="true">
+		<style fill="false" color="224,224,240,100"/>
+		<conditions>
+			<tagmatch key="boundary" value="maritime" type="area"/>
+		</conditions>
+	</tag>
+	<tag name="Boundary/National-Park" priority="50" enabled="true">
+		<style fill="false" color="80,248,84,100"/>
+		<conditions>
+			<tagmatch key="boundary" value="national_park" type="area"/>
+		</conditions>
+	</tag>
+	<tag name="Boundary/Protected-Area" priority="50" enabled="true">
+		<style fill="false" color="247,81,103,100"/>
+		<conditions>
+			<tagmatch key="boundary" value="protected_area" type="area"/>
+		</conditions>
+	</tag>
+	<!-- Places -->
+	<tag name="Places/Continent" priority="1" enabled="true">
+		<style fill="false" color="233,233,233,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="place" value="continent" type="point"/>
+				<tagmatch key="place" value="continent" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Places/Country" priority="1" enabled="true">
+		<style fill="false" color="233,233,233,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="place" value="country" type="point"/>
+				<tagmatch key="place" value="country" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Places/State" priority="1" enabled="true">
+		<style fill="false" color="233,233,233,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="place" value="state" type="point"/>
+				<tagmatch key="place" value="state" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Places/Region" priority="10" enabled="true">
+		<style fill="false" color="233,233,233,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="place" value="region" type="point"/>
+				<tagmatch key="place" value="region" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Places/County" priority="11" enabled="true">
+		<style fill="false" color="233,233,233,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="place" value="county" type="point"/>
+				<tagmatch key="place" value="county" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Places/City" priority="10" enabled="true">
+		<style fill="false" color="233,233,233,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="place" value="city" type="point"/>
+				<tagmatch key="place" value="city" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Places/Town" priority="10" enabled="true">
+		<style fill="false" color="233,233,233,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="place" value="town" type="point"/>
+				<tagmatch key="place" value="town" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Places/Village" priority="10" enabled="true">
+		<style fill="false" color="233,233,233,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="place" value="village" type="point"/>
+				<tagmatch key="place" value="village" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Places/Hamlet" priority="40" enabled="true">
+		<style fill="false" color="233,233,233,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="place" value="hamlet" type="point"/>
+				<tagmatch key="place" value="hamlet" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Places/Dwelling" priority="50" enabled="true">
+		<style fill="false" color="233,233,233,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="place" value="isolated_dwelling" type="point"/>
+				<tagmatch key="place" value="isolated_dwelling" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Places/Suburb" priority="12" enabled="true">
+		<style fill="false" color="233,233,233,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="place" value="suburb" type="point"/>
+				<tagmatch key="place" value="suburb" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Places/Locality" priority="50" enabled="true">
+		<style fill="false" color="233,233,233,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="place" value="locality" type="point"/>
+				<tagmatch key="place" value="locality" type="area"/>
+			</orCondition>
+		</conditions>
+	</tag>
+	<tag name="Places/Island" priority="1" enabled="true">
+		<style fill="false" color="240,240,240,100"/>
+		<conditions>
+			<orCondition>
+				<tagmatch key="place" value="island" type="point"/>
+				<tagmatch key="place" value="island" type="area"/>
+				<tagmatch key="place" value="islet" type="point"/>
+				<tagmatch key="place" value="islet" type="area"/>
 			</orCondition>
 		</conditions>
 	</tag>

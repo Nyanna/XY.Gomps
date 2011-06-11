@@ -3,7 +3,7 @@ package net.xy.gps.render.layer;
 import net.xy.gps.data.IDataObject;
 import net.xy.gps.data.WayData;
 import net.xy.gps.data.tag.Tag;
-import net.xy.gps.data.tag.TagStyles;
+import net.xy.gps.data.tag.TagFactory;
 import net.xy.gps.render.ICanvas;
 import net.xy.gps.render.draw.DrawPoly;
 
@@ -50,9 +50,10 @@ public class ZoomWayLayer extends SimpleLayer {
         }
         final WayData way = (WayData) robj;
         if (way.bounds.dimension.width > tenWidth || way.bounds.dimension.height > tenHeight) {
-            int[] color = BASERGB;
+            Integer[] color = BASERGB;
             if (robj.getTags() != null && robj.getTags().length > 0) {
-                color = TagStyles.getColor(((Tag) robj.getTags()[0]).type);
+                final Tag tag = TagFactory.getTag(robj.getTags()[0]);
+                color = tag.style.color;
             }
             listener.draw(new DrawPoly(way.path, color));
         }

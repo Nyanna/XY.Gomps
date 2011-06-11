@@ -20,8 +20,6 @@ import net.xy.gps.data.IDataObject;
 import net.xy.gps.data.IDataProvider;
 import net.xy.gps.data.PoiData;
 import net.xy.gps.data.WayData;
-import net.xy.gps.data.tag.Tag;
-import net.xy.gps.data.tag.Tag.ITagCondition;
 import net.xy.gps.type.Dimension;
 import net.xy.gps.type.Point;
 import net.xy.gps.type.Rectangle;
@@ -61,8 +59,7 @@ public class TileDriver implements IDataProvider {
      * holds the serilization context
      */
     private final SerialContext ctx = new SerialContext(new Class[] { WayData.class, Point.class,
-            Dimension.class, Rectangle.class, IDataObject.class, BasicTile.class, PoiData.class,
-            ITagCondition.class, Tag.class });
+            Dimension.class, Rectangle.class, IDataObject.class, BasicTile.class, PoiData.class });
 
     public void get(final Rectangle bounds, final IDataReceiver receiver) {
         final int latTilStart = (int) Math.ceil(bounds.origin.lat / LAT_SIZE) - 1;

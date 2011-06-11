@@ -40,5 +40,5 @@ public interface IDataObject extends Serializable {
      * 
      * @return
      */
-    public Object[] getTags();
+    public Integer[] getTags();
 }

@@ -17,7 +17,7 @@ public class DrawArea implements IDrawAction {
     /**
      * stores path color
      */
-    public final int[] color;
+    public final Integer[] color;
     /**
      * should this area be filles with an color
      */
@@ -29,7 +29,7 @@ public class DrawArea implements IDrawAction {
      * @param path
      * @param fill
      */
-    public DrawArea(final Double[][] path, final int[] color, final boolean fill) {
+    public DrawArea(final Double[][] path, final Integer[] color, final boolean fill) {
         this.path = path;
         this.color = color;
         this.fill = fill;

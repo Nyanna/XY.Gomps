@@ -163,6 +163,6 @@ public class StaxOsmParser {
          * @param path
          * @param objects
          */
-        public void putWay(final int id, final List path, final Object[] tags);
+        public void putWay(final int id, final List path, final Integer[] tags);
     }
 }

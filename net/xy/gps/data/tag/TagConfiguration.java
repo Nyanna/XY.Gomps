@@ -3,7 +3,6 @@ package net.xy.gps.data.tag;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.util.List;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -11,9 +10,9 @@ import javax.xml.stream.XMLStreamReader;
 
 import net.xy.codebasel.Utils;
 import net.xy.codebasel.parser.AbstractStaxParser;
+import net.xy.gps.data.IDataObject;
 import net.xy.gps.data.tag.impl.OrCondition;
 import net.xy.gps.data.tag.impl.Style;
-import net.xy.gps.data.tag.impl.Tag;
 import net.xy.gps.data.tag.impl.TagMatchCondition;
 
 /**
@@ -51,7 +50,7 @@ public class TagConfiguration extends AbstractStaxParser {
                             if (isTag("style")) {
                                 final Style style = new Style();
                                 style.fill = (Boolean) def(intval("fill"), style.fill);
-                                style.color = (List) def(intlist("color"), style.color);
+                                style.color = (Integer[]) def(intarray("color"), style.color);
                             } else if (isTag("conditions")) {
                                 foreach(new Found() {
                                     public void tag() throws XMLStreamException {
@@ -88,7 +87,16 @@ public class TagConfiguration extends AbstractStaxParser {
         final TagMatchCondition tagmatch = new TagMatchCondition();
         tagmatch.key = strval("key");
         tagmatch.value = strval("value");
-        tagmatch.type = intval("type");
+        final String type = strval("type");
+        if ("area".equalsIgnoreCase(type)) {
+            tagmatch.type = Integer.valueOf(IDataObject.DATA_AREA);
+        } else if ("way".equalsIgnoreCase(type)) {
+            tagmatch.type = Integer.valueOf(IDataObject.DATA_WAY);
+        } else if ("point".equalsIgnoreCase(type)) {
+            tagmatch.type = Integer.valueOf(IDataObject.DATA_POINT);
+        } else {
+            throw new IllegalArgumentException("Mtachtag type has an inproper value");
+        }
         return tagmatch;
     }
 

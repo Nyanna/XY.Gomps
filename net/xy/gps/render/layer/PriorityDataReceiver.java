@@ -23,36 +23,21 @@ import net.xy.gps.render.ILayer;
  */
 public class PriorityDataReceiver implements IDataReceiver {
     /**
-     * holds the tag config
-     */
-    private static final ConfigKey[] CONF_TAGS_PRIORITY = new ConfigKey[TagFactory
-            .getRegisteredTagsCount()];
-    private static final ConfigKey[] CONF_TAGS_ENABLED = new ConfigKey[TagFactory
-            .getRegisteredTagsCount()];
-    /**
      * holds the types priority configurations
      */
     private static final ConfigKey[] CONF_TYPES_PRIORITY = new ConfigKey[IDataObject.COUNT_DATA];
     private static final ConfigKey[] CONF_TYPES_ENABLED = new ConfigKey[IDataObject.COUNT_DATA];
     static {
-        final String baseTagPrio = "tags.priority.";
-        final String baseTagOn = "tags.enabled.";
-        for (int i = 0; i < CONF_TAGS_PRIORITY.length; i++) {
-            final Tag tag = TagFactory.getTag(i);
-            CONF_TAGS_PRIORITY[i] = Config.registerValues(baseTagPrio + tag.getName(),
-                    Integer.valueOf(100));
-            CONF_TAGS_ENABLED[i] = Config.registerValues(baseTagOn + tag.getName(), Boolean.TRUE);
-        }
         final String baseTypesPrio = "type.priority.";
         final String baseTypesOn = "type.enabled.";
         CONF_TYPES_PRIORITY[0] = Config.registerValues(baseTypesPrio + "DATA_POINT",
-                Integer.valueOf(TagFactory.getRegisteredTagsCount() + 3));
+                Integer.valueOf(103));
         CONF_TYPES_ENABLED[0] = Config.registerValues(baseTypesOn + "DATA_POINT", Boolean.TRUE);
         CONF_TYPES_PRIORITY[1] = Config.registerValues(baseTypesPrio + "DATA_WAY",
-                Integer.valueOf(TagFactory.getRegisteredTagsCount() + 2));
+                Integer.valueOf(102));
         CONF_TYPES_ENABLED[1] = Config.registerValues(baseTypesOn + "DATA_WAY", Boolean.TRUE);
         CONF_TYPES_PRIORITY[2] = Config.registerValues(baseTypesPrio + "DATA_AREA",
-                Integer.valueOf(TagFactory.getRegisteredTagsCount() + 1));
+                Integer.valueOf(101));
         CONF_TYPES_ENABLED[2] = Config.registerValues(baseTypesOn + "DATA_AREA", Boolean.TRUE);
     }
     /**
@@ -84,13 +69,13 @@ public class PriorityDataReceiver implements IDataReceiver {
             if (dat.getTags() != null && dat.getTags().length > 0) { // use tag
                 int priority = -1;
                 for (int j = 0; j < dat.getTags().length; j++) {
-                    final Tag tag = (Tag) dat.getTags()[j];
-                    if (!Config.getBoolean(CONF_TAGS_ENABLED[tag.type]).booleanValue()) {
+                    final Tag tag = TagFactory.getTag(dat.getTags()[j]);
+                    if (!tag.enabled.booleanValue()) {
                         continue;
                     }
-                    final int confPrio = Config.getInteger(CONF_TAGS_PRIORITY[tag.type]).intValue();
-                    if (confPrio > priority) {
-                        priority = confPrio;
+                    ;
+                    if (tag.priority.intValue() > priority) {
+                        priority = tag.priority.intValue();
                     }
                 }
                 if (priority > -1) {

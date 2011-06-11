@@ -56,7 +56,7 @@ public class DBConverter {
                             }
                         }
 
-                        public void putWay(final int id, final List nodes, final Object[] tags) {
+                        public void putWay(final int id, final List nodes, final Integer[] tags) {
                             hsql.convertWay(id, nodes, tags);
                         }
 

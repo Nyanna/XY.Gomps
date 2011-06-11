@@ -22,12 +22,13 @@ public class PoiData implements IDataObject {
     /**
      * to this node corresponding tags
      */
-    private Object[] tags = new Object[0];
+    private Integer[] tags = new Integer[0];
 
     /**
      * serialization constructor
      */
-    public PoiData() {}
+    public PoiData() {
+    }
 
     /**
      * default constructor
@@ -36,7 +37,7 @@ public class PoiData implements IDataObject {
      * @param lon
      * @param label
      */
-    public PoiData(final double lat, final double lon, final int osmid, final Object[] tags) {
+    public PoiData(final double lat, final double lon, final int osmid, final Integer[] tags) {
         position = new Point(lat, lon);
         this.osmid = osmid;
         this.tags = tags;
@@ -50,7 +51,7 @@ public class PoiData implements IDataObject {
         return IDataObject.DATA_POINT;
     }
 
-    public Object[] getTags() {
+    public Integer[] getTags() {
         return tags;
     }
 

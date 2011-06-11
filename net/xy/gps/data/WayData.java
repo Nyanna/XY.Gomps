@@ -31,7 +31,7 @@ public class WayData implements IDataObject {
     /**
      * stores this way tags
      */
-    private Object[] tags = new Object[0];
+    private Integer[] tags = new Integer[0];
     /**
      * stores if this way is an area or way
      */
@@ -52,7 +52,7 @@ public class WayData implements IDataObject {
      * 
      * @param path
      */
-    public WayData(final int id, final Double[][] path, final Object[] tags) {
+    public WayData(final int id, final Double[][] path, final Integer[] tags) {
         this.id = id;
         this.tags = tags;
         this.path = path;
@@ -84,7 +84,7 @@ public class WayData implements IDataObject {
         return type;
     }
 
-    public Object[] getTags() {
+    public Integer[] getTags() {
         return tags;
     }
 

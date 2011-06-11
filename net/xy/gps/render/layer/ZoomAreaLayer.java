@@ -3,7 +3,7 @@ package net.xy.gps.render.layer;
 import net.xy.gps.data.IDataObject;
 import net.xy.gps.data.WayData;
 import net.xy.gps.data.tag.Tag;
-import net.xy.gps.data.tag.TagStyles;
+import net.xy.gps.data.tag.TagFactory;
 import net.xy.gps.render.ICanvas;
 import net.xy.gps.render.draw.DrawArea;
 
@@ -30,7 +30,8 @@ public class ZoomAreaLayer extends SimpleLayer {
     /**
      * area basecolor
      */
-    protected static final int[] BASERGB = new int[] { 180, 180, 180, 50 };
+    protected static final Integer[] BASERGB = new Integer[] { Integer.valueOf(180),
+            Integer.valueOf(180), Integer.valueOf(180), Integer.valueOf(50) };
 
     /**
      * default constructor
@@ -54,11 +55,12 @@ public class ZoomAreaLayer extends SimpleLayer {
         }
         final WayData way = (WayData) robj;
         if (way.bounds.dimension.width > tenWidth || way.bounds.dimension.height > tenHeight) {
-            int[] color = BASERGB;
+            Integer[] color = BASERGB;
             boolean fill = true;
             if (robj.getTags() != null && robj.getTags().length > 0) {
-                color = TagStyles.getColor(((Tag) robj.getTags()[0]).type);
-                fill = TagStyles.isFill(((Tag) robj.getTags()[0]).type);
+                final Tag tag = TagFactory.getTag(robj.getTags()[0]);
+                color = tag.style.color;
+                fill = tag.style.fill.booleanValue();
             }
             listener.draw(new DrawArea(way.path, color, fill));
         }

@@ -14,7 +14,7 @@ public class DrawPoint implements IDrawAction {
     /**
      * point color
      */
-    public final int[] color;
+    public final Integer[] color;
 
     /**
      * default constructor
@@ -22,13 +22,12 @@ public class DrawPoint implements IDrawAction {
      * @param lat
      * @param lon
      */
-    public DrawPoint(final double lat, final double lon, final int[] color) {
+    public DrawPoint(final double lat, final double lon, final Integer[] color) {
         this.lat = lat;
         this.lon = lon;
         this.color = color;
     }
 
-    
     public int getType() {
         return IDrawAction.ACTION_POINT;
     }
