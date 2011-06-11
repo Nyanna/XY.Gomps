@@ -12,88 +12,99 @@ import net.xy.gps.type.Rectangle;
  * 
  */
 public interface ICanvas {
-    /**
-     * adds an layer and returns its index position
-     * 
-     * @param layer
-     * @return
-     */
-    public int addLayer(final ILayer layer);
+  /**
+   * adds an layer and returns its index position
+   * 
+   * @param layer
+   * @return
+   */
+  public int addLayer(final ILayer layer);
 
-    /**
-     * gets actual displayed viewport
-     * 
-     * @return
-     */
-    public Rectangle getViewPort();
+  /**
+   * gets actual displayed viewport
+   * 
+   * @return
+   */
+  public Rectangle getViewPort();
 
-    /**
-     * realigns to the new viewport can trigger animation
-     * 
-     * @param lat
-     * @param lon
-     */
-    public void setViewPort(final double lat, final double lon);
+  /**
+   * realigns to the new viewport can trigger animation
+   * 
+   * @param lat
+   * @param lon
+   */
+  public void setViewPort(final double lat, final double lon);
 
-    /**
-     * realigns new viewport
-     * 
-     * @param lat
-     * @param lon
-     * @param width
-     * @param height
-     */
-    public void setViewPort(final double lat, final double lon, final double width, final double height);
+  /**
+   * realigns new viewport
+   * 
+   * @param lat
+   * @param lon
+   * @param width
+   * @param height
+   */
+  public void setViewPort(final double lat, final double lon, final double width,
+      final double height);
 
-    /**
-     * set new window size on resize operation
-     */
-    public void setSize(final int width, final int height);
+  /**
+   * set new window size on resize operation
+   */
+  public void setSize(final int width, final int height);
 
-    /**
-     * returns actual viewportsize in pixels
-     * 
-     * @return
-     */
-    public Dimension getSize();
+  /**
+   * returns actual viewportsize in pixels
+   * 
+   * @return
+   */
+  public Dimension getSize();
 
-    /**
-     * returns calculated pixel dimensions
-     * 
-     * @return
-     */
-    public Dimension getPixelSize();
+  /**
+   * returns calculated pixel dimensions
+   * 
+   * @return
+   */
+  public Dimension getPixelSize();
 
-    /**
-     * relativize lat and returns x value o current view
-     * 
-     * @param lat
-     * @return
-     */
-    public int getX(final double lat);
+  /**
+   * relativize lat and returns x value o current view
+   * 
+   * @param lat
+   * @return
+   */
+  public int getX(final double lat);
 
-    /**
-     * relativize lon and returns y value o current view
-     * 
-     * @param lat
-     * @return
-     */
-    public int getY(final double lon);
+  /**
+   * relativize lon and returns y value o current view
+   * 
+   * @param lat
+   * @return
+   */
+  public int getY(final double lon);
 
-    /**
-     * redraws all actions
-     */
-    public void update();
+  /**
+   * calculates the stroke size from an meters value
+   * an street with 5 meters width will get an stroke of 3.3 on these view
+   * origin
+   * 
+   * @param meters
+   * @return
+   */
+  public double getWidth(final double meters);
 
-    /**
-     * sets the listener
-     */
-    public void setListener(final ActionListener listener);
+  /**
+   * redraws all actions
+   */
+  public void update();
 
-    /**
-     * removes all existing layers
-     * 
-     * @param objects
-     */
-    public void removeLayers();
+  /**
+   * sets the listener
+   */
+  public void setListener(final ActionListener listener);
+
+  /**
+   * removes all existing layers
+   * 
+   * @param objects
+   */
+  public void removeLayers();
 }

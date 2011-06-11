@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import javax.xml.stream.XMLStreamException;
+
 import net.xy.codebasel.Log;
 import net.xy.codebasel.ThreadLocal;
 import net.xy.codebasel.Utils;
@@ -33,6 +35,8 @@ import net.xy.codebasel.config.TextPropertyRetriever;
 import net.xy.gps.data.IDataProvider;
 import net.xy.gps.data.driver.HSQLDriver;
 import net.xy.gps.data.driver.TileDriver;
+import net.xy.gps.data.tag.TagConfiguration;
+import net.xy.gps.data.tag.TagFactory;
 import net.xy.gps.render.layer.PriorityDataReceiver;
 import net.xy.gps.render.layer.PriorityDataReceiver.CreateLayersCallback;
 import net.xy.gps.render.layer.ZoomAreaLayer;
@@ -83,7 +87,8 @@ public class Example {
     private final double acceleration = 1.1;
     private final double limit = 18;
     // percentage stepping of viewport
-    private static final double move = 0.05;
+    private static final double move = 0.2;
+    private static final double zoom = 0.2;
     private double[] dragStart = null;
     private boolean shouldRepaint = false;
     private static Thread paint;
@@ -223,7 +228,10 @@ public class Example {
         Config.addDefaultRetrievers(args);
         try {
             Config.addRetriever(new TextPropertyRetriever("net/xy/gps/render/priorities.properties"));
+            new TagConfiguration("net/xy/gps/data/tag/tags.conf.xml", new TagFactory());
         } catch (final IOException e) {
+            throw new RuntimeException(e);
+        } catch (final XMLStreamException e) {
             throw new RuntimeException(e);
         }
         MAIN.setVisible(true);
@@ -322,8 +330,8 @@ public class Example {
             perspective.setViewPort(perspective.getViewPort().origin.lat + byY,
                     perspective.getViewPort().origin.lon);
         }
-        final double byW = perspective.getViewPort().dimension.width * 0.3;
-        final double byH = perspective.getViewPort().dimension.height * 0.3;
+        final double byW = perspective.getViewPort().dimension.width * zoom;
+        final double byH = perspective.getViewPort().dimension.height * zoom;
         if (z > 0) {
             final double newLat = perspective.getViewPort().origin.lat + byW / 2;
             final double newLon = perspective.getViewPort().origin.lon + byH / 2;

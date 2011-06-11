@@ -6,150 +6,161 @@ import net.xy.gps.render.ICanvas;
 import net.xy.gps.render.IDrawAction;
 import net.xy.gps.render.ILayer;
 import net.xy.gps.type.Dimension;
+import net.xy.gps.type.GeoTools;
 import net.xy.gps.type.Point;
 import net.xy.gps.type.Rectangle;
 
 public class Action2DView implements ICanvas {
-    /**
-     * stores the layers
-     */
-    private ObjectArray layers = new ObjectArray(10, 10);
-    /**
-     * initial unit or pixel dimensions
-     */
-    protected Dimension displaySize;
-    /**
-     * coordinate space used
-     */
-    private Rectangle view = new Rectangle(new Point(53, 8), new Dimension(1, 1));
-    private Dimension unitSize = null;
-    private ActionListener listener;
+  /**
+   * stores the layers
+   */
+  private ObjectArray layers = new ObjectArray(10, 10);
+  /**
+   * initial unit or pixel dimensions
+   */
+  protected Dimension displaySize;
+  /**
+   * coordinate space used
+   */
+  private Rectangle view = new Rectangle(new Point(53, 8), new Dimension(1, 1));
+  private Dimension unitSize = null;
+  private ActionListener listener;
 
+  /**
+   * default constructor
+   * 
+   * @param width
+   * @param height
+   */
+  public Action2DView(final int width, final int height, final ActionListener listener) {
+    setSize(width, height);
+    this.listener = listener;
+  }
+
+  /**
+   * default without listener
+   * 
+   * @param width
+   * @param height
+   */
+  public Action2DView(final int width, final int height) {
+    this(width, height, null);
+  }
+
+  public int addLayer(final ILayer layer) {
+    layers.add(layer);
+    final int index = layers.getLastIndex();
+    layer.setListener(new ActionListener() {
+
+      public void draw(final IDrawAction action) {
+        listener.draw(action);
+      }
+    });
+    return index;
+  }
+
+  public void removeLayers() {
+    layers = new ObjectArray(10, 10);
+  }
+
+  public Rectangle getViewPort() {
+    return view;
+  }
+
+  public void setViewPort(final double lat, final double lon) {
+    view = new Rectangle(new Point(lat, lon), view.dimension);
+  }
+
+  public void setViewPort(final double lat, final double lon, final double width,
+      final double height) {
+    view = new Rectangle(new Point(lat, lon), new Dimension(width, height));
+    calculateUnitSize();
+  }
+
+  public void setSize(final int width, final int height) {
+    final double ratio = (double) width / height;
+    if (displaySize == null || width != displaySize.width
+        || height != (int) displaySize.width * ratio) {
+      displaySize = new Dimension(width, height);
+      view = new Rectangle(view.origin, new Dimension(view.dimension.width, view.dimension.width
+          * ratio));
+      calculateUnitSize();
+    }
+  }
+
+  public Dimension getSize() {
+    return displaySize;
+  }
+
+  public Dimension getPixelSize() {
+    return unitSize;
+  }
+
+  /**
+   * implements an listener if action could aggregated
+   * 
+   * @author Xyan
+   * 
+   */
+  public static interface ActionListener {
     /**
-     * default constructor
+     * receives draw actions
      * 
-     * @param width
-     * @param height
+     * @param action
      */
-    public Action2DView(final int width, final int height, final ActionListener listener) {
-        setSize(width, height);
-        this.listener = listener;
-    }
+    public void draw(IDrawAction action);
+  }
 
-    /**
-     * default without listener
-     * 
-     * @param width
-     * @param height
+  public int getX(final double lon) {
+    return (int) Math.round(((lon - view.origin.lon) / unitSize.height));
+  }
+
+  public int getY(final double lat) {
+    /*
+     * osm origin is bottom left (equar meridian), displays and calculation
+     * top left and graphics origin is top left
      */
-    public Action2DView(final int width, final int height) {
-        this(width, height, null);
-    }
+    return (int) Math.round(displaySize.height - (lat - view.origin.lat) / unitSize.width);
+  }
 
-    public int addLayer(final ILayer layer) {
-        layers.add(layer);
-        final int index = layers.getLastIndex();
-        layer.setListener(new ActionListener() {
+  public double getLon(final int xpos) {
+    return xpos * unitSize.height;
+  }
 
-            public void draw(final IDrawAction action) {
-                listener.draw(action);
-            }
-        });
-        return index;
-    }
+  public double getLat(final int ypos) {
+    return (displaySize.height - ypos) * unitSize.width;
+  }
 
-    public void removeLayers() {
-        layers = new ObjectArray(10, 10);
-    }
+  public double getWidth(final double meters) {
+    final double lon = GeoTools.metersToLon(meters, view.origin.lat);
+    final double calc = lon / unitSize.height * 3;
+    return calc > 0.5d ? calc : 0.5d;
+  }
 
-    public Rectangle getViewPort() {
-        return view;
-    }
+  /**
+   * calculates size of one pixel or unit in absolute space.
+   * 10 degrees lat displayed with 100 pixel means one pixel will cover 0,1
+   * degrees
+   * 
+   * @return
+   */
+  private void calculateUnitSize() {
+    unitSize = new Dimension(view.dimension.width / displaySize.height, view.dimension.height
+        / displaySize.width);
+  }
 
-    public void setViewPort(final double lat, final double lon) {
-        view = new Rectangle(new Point(lat, lon), view.dimension);
+  public void update() {
+    final Object[] layers = this.layers.get();
+    for (int i = 0; i < layers.length; i++) {
+      final ILayer layer = (ILayer) layers[i];
+      if (((Boolean) ThreadLocal.get()).booleanValue()) {
+        return;
+      }
+      layer.update();
     }
+  }
 
-    public void setViewPort(final double lat, final double lon, final double width, final double height) {
-        view = new Rectangle(new Point(lat, lon), new Dimension(width, height));
-        calculateUnitSize();
-    }
-
-    public void setSize(final int width, final int height) {
-        final double ratio = (double) width / height;
-        if (displaySize == null || width != displaySize.width || height != (int) displaySize.width * ratio) {
-            displaySize = new Dimension(width, height);
-            view = new Rectangle(view.origin, new Dimension(view.dimension.width, view.dimension.width * ratio));
-            calculateUnitSize();
-        }
-    }
-
-    public Dimension getSize() {
-        return displaySize;
-    }
-
-    public Dimension getPixelSize() {
-        return unitSize;
-    }
-
-    /**
-     * implements an listener if action could aggregated
-     * 
-     * @author Xyan
-     * 
-     */
-    public static interface ActionListener {
-        /**
-         * receives draw actions
-         * 
-         * @param action
-         */
-        public void draw(IDrawAction action);
-    }
-
-    public int getX(final double lon) {
-        return (int) Math.round(((lon - view.origin.lon) / unitSize.height));
-    }
-
-    public int getY(final double lat) {
-        /*
-         * osm origin is bottom left (equar meridian), displays and calculation
-         * top left and graphics origin is top left
-         */
-        return (int) Math.round(displaySize.height - (lat - view.origin.lat) / unitSize.width);
-    }
-
-    public double getLon(final int xpos) {
-        return xpos * unitSize.height;
-    }
-
-    public double getLat(final int ypos) {
-        return (displaySize.height - ypos) * unitSize.width;
-    }
-
-    /**
-     * calculates size of one pixel or unit in absolute space.
-     * 10 degrees lat displayed with 100 pixel means one pixel will cover 0,1
-     * degrees
-     * 
-     * @return
-     */
-    private void calculateUnitSize() {
-        unitSize = new Dimension(view.dimension.width / displaySize.height, view.dimension.height / displaySize.width);
-    }
-
-    public void update() {
-        final Object[] layers = this.layers.get();
-        for (int i = 0; i < layers.length; i++) {
-            final ILayer layer = (ILayer) layers[i];
-            if (((Boolean) ThreadLocal.get()).booleanValue()) {
-                return;
-            }
-            layer.update();
-        }
-    }
-
-    public void setListener(final ActionListener listener) {
-        this.listener = listener;
-    }
+  public void setListener(final ActionListener listener) {
+    this.listener = listener;
+  }
 }
