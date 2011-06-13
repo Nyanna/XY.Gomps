@@ -70,4 +70,8 @@ public class StatLayer extends SimpleLayer implements ILayer {
   public void update() {
     draw(null);
   }
+
+  public boolean isEmpty() {
+    return false;
+  }
 }

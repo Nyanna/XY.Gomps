@@ -7,7 +7,7 @@ import java.util.Map;
 import net.xy.codebasel.ThreadLocal;
 import net.xy.gps.data.IDataObject;
 import net.xy.gps.render.ILayer;
-import net.xy.gps.render.perspective.Action2DView.ActionListener;
+import net.xy.gps.render.perspective.ActionListener;
 
 /**
  * an simple layer
@@ -76,5 +76,9 @@ public abstract class SimpleLayer implements ILayer {
     synchronized (objs) {
       objs = new HashMap();
     }
+  }
+
+  public boolean isEmpty() {
+    return objs.isEmpty();
   }
 }

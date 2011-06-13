@@ -73,6 +73,8 @@ public class TagConfiguration extends AbstractStaxParser {
                 tag.name = (String) def(attribute("name"), tag.name);
                 tag.priority = (Integer) def(intval("priority"), tag.priority);
                 tag.enabled = (Boolean) def(boolval("enabled"), tag.enabled);
+                final Double zoom = doubleval("zoom");
+                tag.zoom = zoom != null ? zoom.doubleValue() : tag.zoom;
                 foreach(new Found() {
                   public void tag() throws XMLStreamException {
                     if (isTag("style")) {

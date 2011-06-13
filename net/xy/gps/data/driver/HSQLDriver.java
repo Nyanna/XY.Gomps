@@ -21,6 +21,7 @@ import net.xy.gps.data.PoiData;
 import net.xy.gps.data.WayData;
 import net.xy.gps.data.tag.Tag;
 import net.xy.gps.data.tag.TagFactory;
+import net.xy.gps.render.perspective.ActionListener;
 import net.xy.gps.type.Boundary;
 import net.xy.gps.type.Dimension;
 import net.xy.gps.type.Point;
@@ -320,5 +321,10 @@ public class HSQLDriver implements IDataProvider {
       throw new LogError(CONF_DB_ERROR_BOUNDS, e);
     }
     return new Rectangle(new Point(0, 0), new Dimension());
+  }
+
+  public void setListener(final ActionListener listener) {
+    // No visual output for db
+    // TODO visual output for db
   }
 }

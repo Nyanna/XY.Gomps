@@ -22,9 +22,17 @@ public class Action2DView implements ICanvas {
   /**
    * coordinate space used
    */
-  private Rectangle view = new Rectangle(new Point(53, 8), new Dimension(1, 1));
+  private Rectangle view = new Rectangle(new Point(53.08683729, 8.8188222616), new Dimension(0.007,
+      0.007));
   private Dimension unitSize = null;
+  /**
+   * rendering adapter
+   */
   private ActionListener listener;
+  /**
+   * indicates if sicne tha last complete update the view was changed
+   */
+  private boolean isValid = true;
 
   /**
    * default constructor
@@ -32,19 +40,8 @@ public class Action2DView implements ICanvas {
    * @param width
    * @param height
    */
-  public Action2DView(final int width, final int height, final ActionListener listener) {
-    setSize(width, height);
-    this.listener = listener;
-  }
-
-  /**
-   * default without listener
-   * 
-   * @param width
-   * @param height
-   */
   public Action2DView(final int width, final int height) {
-    this(width, height, null);
+    setSize(width, height);
   }
 
   public int addLayer(final ILayer layer) {
@@ -55,12 +52,23 @@ public class Action2DView implements ICanvas {
       public void draw(final IDrawAction action) {
         listener.draw(action);
       }
+
+      public void updateStart() {
+        // when layer request update do nothing at the moment
+      }
+
+      public void updateEnd(final boolean success) {
+      }
     });
+    if (!layer.isEmpty()) {
+      isValid = false;
+    }
     return index;
   }
 
   public void removeLayers() {
     layers = new ObjectArray(10, 10);
+    isValid = false;
   }
 
   public Rectangle getViewPort() {
@@ -68,13 +76,20 @@ public class Action2DView implements ICanvas {
   }
 
   public void setViewPort(final double lat, final double lon) {
-    view = new Rectangle(new Point(lat, lon), view.dimension);
+    if (view.origin.lat != lat || view.origin.lon != lon) {
+      view = new Rectangle(new Point(lat, lon), view.dimension);
+      isValid = false;
+    }
   }
 
   public void setViewPort(final double lat, final double lon, final double width,
       final double height) {
-    view = new Rectangle(new Point(lat, lon), new Dimension(width, height));
-    calculateUnitSize();
+    if (view.origin.lat != lat || view.origin.lon != lon || //
+        view.dimension.width != width || view.dimension.height != height) {
+      view = new Rectangle(new Point(lat, lon), new Dimension(width, height));
+      calculateUnitSize();
+      isValid = false;
+    }
   }
 
   public void setSize(final int width, final int height) {
@@ -85,6 +100,7 @@ public class Action2DView implements ICanvas {
       view = new Rectangle(view.origin, new Dimension(view.dimension.width, view.dimension.width
           * ratio));
       calculateUnitSize();
+      isValid = false;
     }
   }
 
@@ -94,21 +110,6 @@ public class Action2DView implements ICanvas {
 
   public Dimension getPixelSize() {
     return unitSize;
-  }
-
-  /**
-   * implements an listener if action could aggregated
-   * 
-   * @author Xyan
-   * 
-   */
-  public static interface ActionListener {
-    /**
-     * receives draw actions
-     * 
-     * @param action
-     */
-    public void draw(IDrawAction action);
   }
 
   public int getX(final double lon) {
@@ -134,6 +135,7 @@ public class Action2DView implements ICanvas {
   public double getWidth(final double meters) {
     final double lon = GeoTools.metersToLon(meters, view.origin.lat);
     final double calc = lon / unitSize.height * 3;
+    // TODO dynamic scaling of width
     return calc > 0.5d ? calc : 0.5d;
   }
 
@@ -150,17 +152,25 @@ public class Action2DView implements ICanvas {
   }
 
   public void update() {
+    listener.updateStart(); // prepare view
     final Object[] layers = this.layers.get();
     for (int i = 0; i < layers.length; i++) {
       final ILayer layer = (ILayer) layers[i];
       if (((Boolean) ThreadLocal.get()).booleanValue()) {
+        listener.updateEnd(false);
         return;
       }
       layer.update();
     }
+    isValid = true;
+    listener.updateEnd(true);
   }
 
   public void setListener(final ActionListener listener) {
     this.listener = listener;
+  }
+
+  public boolean isValid() {
+    return isValid;
   }
 }

@@ -1,6 +1,6 @@
 package net.xy.gps.render;
 
-import net.xy.gps.render.perspective.Action2DView.ActionListener;
+import net.xy.gps.render.perspective.ActionListener;
 import net.xy.gps.type.Dimension;
 import net.xy.gps.type.Rectangle;
 
@@ -97,14 +97,24 @@ public interface ICanvas {
   public void update();
 
   /**
-   * sets the listener
-   */
-  public void setListener(final ActionListener listener);
-
-  /**
    * removes all existing layers
    * 
    * @param objects
    */
   public void removeLayers();
+
+  /**
+   * registers an handler for rendering action
+   * 
+   * @param listener
+   */
+  public void setListener(final ActionListener listener);
+
+  /**
+   * if the perspective altered since last update
+   * added layer moved or resized
+   * 
+   * @return
+   */
+  public boolean isValid();
 }
