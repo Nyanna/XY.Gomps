@@ -14,13 +14,6 @@ Phase 2 target features:
 	-routing modes
 
 TODO:
--split data types and rendering, sorting
-	1. render areas from largest to smallest ones
-	2. streets from highest to lowest ones
-	3. points from most importent to lowest
+-merge streets with same colors in rendering
 -build menu
--build config manager (config, resources)
--implement styles
--implement codebase logging
 -add gps support
--add logging exception (replace old in hsql)

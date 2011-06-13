@@ -11,35 +11,42 @@ import net.xy.gps.render.perspective.ActionListener;
  */
 public interface ILayer {
 
-  /**
-   * adds an object to the layer
-   * 
-   * @param object
-   */
-  public void addObject(final IDataObject object);
+    /**
+     * adds an object to the layer
+     * 
+     * @param object
+     */
+    public void addObject(final IDataObject object);
 
-  /**
-   * clears all objects from the layer
-   */
-  public void clear();
+    /**
+     * removes only one object from layer
+     * 
+     * @param object
+     */
+    public void removeObject(final IDataObject object);
 
-  /**
-   * adds an listener that is called on draw events
-   * 
-   * @param view
-   * @return
-   */
-  public void setListener(final ActionListener listener);
+    /**
+     * clears all objects from the layer
+     */
+    public void clear();
 
-  /**
-   * causes an redraw of all actual data
-   */
-  public void update();
+    /**
+     * adds an listener that is called on draw events
+     * 
+     * @param view
+     * @return
+     */
+    public void setListener(final ActionListener listener);
 
-  /**
-   * is the layers still empty and clean
-   * 
-   * @return
-   */
-  public boolean isEmpty();
+    /**
+     * causes an redraw of all actual data
+     */
+    public void update();
+
+    /**
+     * is the layers still empty and clean
+     * 
+     * @return
+     */
+    public boolean isEmpty();
 }

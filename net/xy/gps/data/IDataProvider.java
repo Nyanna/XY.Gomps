@@ -11,34 +11,41 @@ import net.xy.gps.type.Rectangle;
  */
 public interface IDataProvider {
 
-  /**
-   * blocks and calls receiver as more data becomes available
-   * 
-   * @param bounds
-   * @return
-   */
-  public void get(Rectangle bounds, final IDataReceiver receiver);
-
-  /**
-   * sets an listener for additional visual tracking
-   * 
-   * @param listener
-   */
-  public void setListener(final ActionListener listener);
-
-  /**
-   * data listener
-   * 
-   * @author Xyan
-   * 
-   */
-  public static interface IDataReceiver {
+    /**
+     * blocks and calls receiver as more data becomes available
+     * 
+     * @param bounds
+     * @return
+     */
+    public void get(Rectangle bounds, final IDataReceiver receiver);
 
     /**
-     * receives the data
+     * sets an listener for additional visual tracking
      * 
-     * @param data
+     * @param listener
      */
-    public void accept(final Object[] data);
-  }
+    public void setListener(final ActionListener listener);
+
+    /**
+     * data listener
+     * 
+     * @author Xyan
+     * 
+     */
+    public static interface IDataReceiver {
+
+        /**
+         * receives the data
+         * 
+         * @param data
+         */
+        public void accept(final Object[] data);
+
+        /**
+         * removes not needed or obsolte data from the receiver
+         * 
+         * @param data
+         */
+        public void revoke(final Object[] data);
+    }
 }
