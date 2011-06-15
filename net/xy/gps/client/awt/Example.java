@@ -1,3 +1,15 @@
+/**
+ * This file is part of XY.Gomps, Copyright 2011 (C) Xyan Kruse, Xyan@gmx.net, Xyan.kilu.de
+ *
+ * XY.Gomps is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ *
+ * XY.Gomps is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with XY.Gomps. If not, see
+ * <http://www.gnu.org/licenses/>.
+ */
 package net.xy.gps.client.awt;
 
 import java.awt.Color;
@@ -53,8 +65,6 @@ public class Example {
     /**
      * messages
      */
-    private static final ConfigKey CONF_TEXT_IN_DATA = Config.registerValues("main.state.in.data",
-            "Accepting new data from provider");
     private static final ConfigKey CONF_TEXT_INIT_DATAPROVIDER = Config.registerValues("main.init.provider",
             "Initializing data provider");
     private static final ConfigKey CONF_TEXT_INIT_EVENT_LISTENERS = Config.registerValues("main.init.events",
@@ -73,7 +83,7 @@ public class Example {
      */
     private static final Frame MAIN = new Frame("XY.GpsMid");
     static {
-        MAIN.setSize(400, 300);
+        MAIN.setSize(600, 450);
         MAIN.setBackground(Color.BLACK);
         MAIN.setVisible(true);
     }
@@ -170,7 +180,7 @@ public class Example {
                 if (dragStart != null && System.currentTimeMillis() > lastMove) {
                     listener.moveBuffer((int) (dragStart[2] - e.getX()), (int) (dragStart[3] - e.getY()) * -1);
                     dragStart = new double[] { e.getX(), e.getY(), dragStart[2], dragStart[3] };
-                    lastMove = System.currentTimeMillis() + 40;
+                    lastMove = System.currentTimeMillis() + 100;
                 }
             }
 
@@ -275,12 +285,9 @@ public class Example {
                 while (true) {
                     ThreadLocal.set(Boolean.FALSE);
                     final Rectangle actual = main.perspective.getViewPort();
-                    // TODO has changes trigger abort only be more than 20%
                     if (oldRect == null || !oldRect.equals(actual)) {
                         oldRect = actual;
-                        main.dataReceiver.clearLayers();// TODO wrong place,
-                                                        // dont remove data from
-                                                        // actual view
+                        // main.dataReceiver.clearLayers(); ineffective
                         main.data.get(main.perspective.getViewPort(), main.dataReceiver);
                     }
                     Utils.sleep(200);

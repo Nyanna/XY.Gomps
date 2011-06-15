@@ -1,3 +1,15 @@
+/**
+ * This file is part of XY.Gomps, Copyright 2011 (C) Xyan Kruse, Xyan@gmx.net, Xyan.kilu.de
+ * 
+ * XY.Gomps is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ * 
+ * XY.Gomps is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with XY.Gomps. If not, see
+ * <http://www.gnu.org/licenses/>.
+ */
 package net.xy.gps.render.layer;
 
 import java.util.HashMap;
@@ -23,8 +35,8 @@ public abstract class SimpleLayer implements ILayer {
     /**
      * base builtin colors of untagged objects
      */
-    protected static final Integer[] BASERGB = new Integer[] { Integer.valueOf(0), Integer.valueOf(0), Integer.valueOf(0),
-            Integer.valueOf(15) };
+    protected static final Integer[] BASERGB = new Integer[] { Integer.valueOf(0), Integer.valueOf(0),
+            Integer.valueOf(0), Integer.valueOf(15) };
     /**
      * draw event listener
      */
@@ -70,11 +82,11 @@ public abstract class SimpleLayer implements ILayer {
     public void update() {
         synchronized (objs) {
             for (final Iterator iterator = objs.values().iterator(); iterator.hasNext();) {
-                final Object obj = iterator.next();
+                final IDataObject obj = (IDataObject) iterator.next();
                 if (((Boolean) ThreadLocal.get()).booleanValue()) {
                     return;
                 }
-                draw((IDataObject) obj);
+                draw(obj);
             }
         }
     }

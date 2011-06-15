@@ -1,3 +1,15 @@
+/**
+ * This file is part of XY.Gomps, Copyright 2011 (C) Xyan Kruse, Xyan@gmx.net, Xyan.kilu.de
+ *
+ * XY.Gomps is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ *
+ * XY.Gomps is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with XY.Gomps. If not, see
+ * <http://www.gnu.org/licenses/>.
+ */
 package net.xy.gps.data.driver;
 
 import java.io.DataInputStream;
@@ -7,9 +19,12 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import net.xy.codebasel.Log;
 import net.xy.codebasel.ObjectArray;
@@ -22,6 +37,7 @@ import net.xy.gps.data.IDataProvider;
 import net.xy.gps.data.PoiData;
 import net.xy.gps.data.WayData;
 import net.xy.gps.render.draw.DrawArea;
+import net.xy.gps.render.draw.DrawPoint;
 import net.xy.gps.render.perspective.ActionListener;
 import net.xy.gps.type.Dimension;
 import net.xy.gps.type.Point;
@@ -38,30 +54,20 @@ public class TileDriver implements IDataProvider {
             "Error on reading tile");
     private static final ConfigKey CONF_TEXT_TILE_READ_STAT = Config.registerValues("driver.tile.read.stat",
             "Loading tile tok milliseconds, dataset");
-    private static final ConfigKey CONF_TEXT_TILE_READ_CACHE_NEW = Config.registerValues("driver.tile.read.cache.new",
-            "Read tile from new cache");
     private static final ConfigKey CONF_TEXT_TILE_READ_CACHE_OLD = Config.registerValues("driver.tile.read.cache.old",
             "Read tile from old cache");
-    private static final ConfigKey CONF_TEXT_CACHE_CLEAN = Config.registerValues("driver.tile.cache.clean",
-            "Clearing old cache replacing with new");
+    private static final ConfigKey CONF_TEXT_TILE_REMOVED = Config.registerValues("driver.tile.removed",
+            "Removed unused tile");
     private static final ConfigKey CONF_TEXT_ERROR_TILE_WRITE = Config.registerValues("driver.error.tile.write",
             "Write tile");
     private static final ConfigKey CONF_TEXT_ABORT_RUN = Config.registerValues("driver.obsolete.return",
             "Run is outdated returning");
+    private static final ConfigKey CONF_TEXT_ABORT_REVOKE = Config.registerValues("driver.obsolete.revoke",
+            "Run is outdated returning from revoking");
     private static final ConfigKey CONF_TEXT_CALL_RANGE = Config.registerValues("driver.tile.call",
             "Following tile range is requested");
-    /**
-     * tile size lat
-     */
-    private static final double LAT_SIZE = 0.005;
-    /**
-     * tile size lon
-     */
-    private static final double LON_SIZE = 0.005;
-    /**
-     * reduces loading time of already cached tiles, refreshes each request
-     */
-    private Map tileCache = new HashMap();
+    private static final ConfigKey CONF_TEXT_ABORT_MEMORY = Config.registerValues("driver.error.memory",
+            "Abort tile loading less than 10% memory free");
     /**
      * holds the serilization context
      */
@@ -73,87 +79,132 @@ public class TileDriver implements IDataProvider {
     private ActionListener drawListener = null;
     // if tile loaded from cache
     private static final Integer[] cacheLoaded = new Integer[] { Integer.valueOf(0), Integer.valueOf(255),
-            Integer.valueOf(0), Integer.valueOf(10) };
+            Integer.valueOf(0), Integer.valueOf(15) };
     // if loaded from file
     private static final Integer[] fileLoaded = new Integer[] { Integer.valueOf(0), Integer.valueOf(0),
-            Integer.valueOf(255), Integer.valueOf(10) };
+            Integer.valueOf(255), Integer.valueOf(15) };
     // error on loading tile
     private static final Integer[] errorLoaded = new Integer[] { Integer.valueOf(255), Integer.valueOf(0),
             Integer.valueOf(0), Integer.valueOf(150) };
+    /**
+     * tile size lat
+     */
+    private static final double LAT_SIZE = 0.005;
+    /**
+     * tile size lon
+     */
+    private static final double LON_SIZE = 0.005;
+    /**
+     * reduces loading time of already cached tiles, refreshes each request
+     */
+    private final Map tileCache = new HashMap();
 
     public void get(final Rectangle bounds, final IDataReceiver receiver) {
         final int latTilStart = (int) Math.floor(bounds.origin.lat / LAT_SIZE);
         final int lonTilStart = (int) Math.floor(bounds.origin.lon / LON_SIZE);
-        final int latTilRange = (int) Math.floor(bounds.dimension.width / LAT_SIZE) + 1;
-        final int lonTilRange = (int) Math.floor(bounds.dimension.height / LON_SIZE) + 1;
-        Log.trace(CONF_TEXT_CALL_RANGE,
+        final int latTilRange = (int) Math.ceil(bounds.dimension.width / LAT_SIZE) + 1;
+        final int lonTilRange = (int) Math.ceil(bounds.dimension.height / LON_SIZE) + 1;
+        drawListener.draw(new DrawPoint(bounds.origin.lat, bounds.origin.lon, cacheLoaded));
+        Log.comment(CONF_TEXT_CALL_RANGE,
                 new Object[] { Integer.valueOf(latTilStart), Integer.valueOf(lonTilStart), Integer.valueOf(latTilRange),
                         Integer.valueOf(lonTilRange) });
-        final Map newTileCache = new HashMap();
-        final Iterator spiral = new SpiralStrategy(latTilStart, lonTilStart, latTilRange, lonTilRange);
-        while (spiral.hasNext()) {
-            final Integer[] coords = (Integer[]) spiral.next();
-            final int latt = coords[0].intValue();
-            final int lont = coords[1].intValue();
-            final String tilename = getTileName(latt, lont);
-            BasicTile tile = (BasicTile) tileCache.get(tilename);
-            if (tile == null) {
-                tile = (BasicTile) newTileCache.get(tilename);
-                if (tile == null) {
-                    final long start = System.currentTimeMillis();
-                    try {
-                        // TODO show mem statistics
-                        // TODO prepare for out of memory dont load data and
-                        // first try to clean cache
-                        // TODO low mem test and profiling
-                        final DataInputStream oin = new DataInputStream(new FileInputStream(new File(tilename)));
-                        tile = (BasicTile) ctx.deserialize(oin);
-                        oin.close();
-                    } catch (final FileNotFoundException e) {
-                        drawState(latt, lont, errorLoaded);
-                        if (((Boolean) ThreadLocal.get()).booleanValue()) {
-                            Log.comment(CONF_TEXT_ABORT_RUN);
-                            return;
-                        }
-                        continue; // skip reading tile is empty
-                    } catch (final Exception e) {
-                        drawState(latt, lont, errorLoaded);
-                        Log.warning(CONF_TEXT_ERROR_TILE_READ, new Object[] { tilename });
-                        if (e.getCause() != null) {
-                            Log.log(Log.LVL_NOTICE,
-                                    e.toString() + "\n" + Log.printStack(e.getStackTrace(), 3) + "\nCaused by: "
-                                            + e.getCause().toString() + "\n"
-                                            + Log.printStack(e.getCause().getStackTrace(), 3), null);
-                        } else {
-                            Log.log(Log.LVL_NOTICE, e.toString() + "\n" + Log.printStack(e.getStackTrace(), 3), null);
-                        }
-                        continue; // skip
-                    }
-                    tileCache.put(tilename, tile);
-                    newTileCache.put(tilename, tile);
-                    drawState(latt, lont, fileLoaded);
-                    Log.comment(
-                            CONF_TEXT_TILE_READ_STAT,
-                            new Object[] { tilename, Long.valueOf((System.currentTimeMillis() - start)),
-                                    Integer.valueOf(tile.objects.length) });
-                } else { // from new cache
-                    // drawState(latt, lont, cacheLoaded);
-                    Log.comment(CONF_TEXT_TILE_READ_CACHE_NEW, new Object[] { tilename });
-                }
-            } else { // from old cache
-                // drawState(latt, lont, cacheLoaded);
-                Log.comment(CONF_TEXT_TILE_READ_CACHE_OLD, new Object[] { tilename });
-                newTileCache.put(tilename, tile);
+
+        // check and remove phase
+        Iterator spiral = new SpiralStrategy(latTilStart - 1, lonTilStart - 1, latTilRange + 2, lonTilRange + 2);
+        final List keepKeyList = new ArrayList();
+        // final List loadKeyList = new ArrayList();
+        while (spiral.hasNext()) { // copy over used tiles
+            if (((Boolean) ThreadLocal.get()).booleanValue()) {
+                Log.comment(CONF_TEXT_ABORT_REVOKE);
+                return;
             }
+            final Integer[] coords = (Integer[]) spiral.next();
+            final Point tileKey = new Point(coords[0].doubleValue(), coords[1].doubleValue());
+            if (tileCache.containsKey(tileKey)) {
+                keepKeyList.add(tileKey);
+            } else {
+                // loadKeyList.add(tilename);
+            }
+        }
+
+        for (final Iterator i = tileCache.entrySet().iterator(); i.hasNext();) {
+            if (((Boolean) ThreadLocal.get()).booleanValue()) {
+                Log.comment(CONF_TEXT_ABORT_REVOKE);
+                return;
+            }
+            final Entry entry = (Entry) i.next();
+            final Point point = (Point) entry.getKey();
+            if (!keepKeyList.contains(entry.getKey())) {
+                drawState((int) point.lat, (int) point.lon, errorLoaded);
+                i.remove();
+                receiver.revoke(((BasicTile) entry.getValue()).objects); // revoke
+                                                                         // old
+                Log.comment(CONF_TEXT_TILE_REMOVED, new Object[] { point });
+            }
+        }
+        System.gc();
+
+        // read and add phase
+        spiral = new SpiralStrategy(latTilStart, lonTilStart, latTilRange, lonTilRange);
+        while (spiral.hasNext()) {
             if (((Boolean) ThreadLocal.get()).booleanValue()) {
                 Log.comment(CONF_TEXT_ABORT_RUN);
                 return;
             }
-            // and return
-            receiver.accept(tile.objects);
+            final Integer[] coords = (Integer[]) spiral.next();
+            final int[] lattlon = new int[] { coords[0].intValue(), coords[1].intValue() };
+            final Point tileKey = new Point(lattlon[0], lattlon[1]);
+
+            BasicTile tile = (BasicTile) tileCache.get(tileKey);
+            if (tile == null) {
+                if (!isFreeMem()) {
+                    Log.warning(CONF_TEXT_ABORT_MEMORY);
+                    return;
+                }
+                final long start = System.currentTimeMillis();
+                try {
+                    final String tileName = getTileName(lattlon[0], lattlon[1]);
+                    final DataInputStream oin = new DataInputStream(new FileInputStream(new File(tileName)));
+                    tile = (BasicTile) ctx.deserialize(oin);
+                    oin.close();
+                    drawState(lattlon[0], lattlon[1], fileLoaded);
+                    tileCache.put(tileKey, tile);
+                    Log.comment(
+                            CONF_TEXT_TILE_READ_STAT,
+                            new Object[] { tileKey, Long.valueOf((System.currentTimeMillis() - start)),
+                                    Integer.valueOf(tile.objects.length) });
+                    receiver.accept(tile.objects);
+                } catch (final FileNotFoundException e) {
+                    drawState(lattlon[0], lattlon[1], errorLoaded);
+                } catch (final OutOfMemoryError e) {
+                    System.gc();
+                    Log.warning(CONF_TEXT_ABORT_MEMORY);
+                    return;
+                } catch (final Exception e) {
+                    drawState(lattlon[0], lattlon[1], errorLoaded);
+                    Log.warning(CONF_TEXT_ERROR_TILE_READ, new Object[] { tileKey });
+                    extendedLog(e);
+                }
+            } else { // from old cache
+                drawState(lattlon[0], lattlon[1], cacheLoaded);
+                Log.comment(CONF_TEXT_TILE_READ_CACHE_OLD, new Object[] { tileKey });
+                receiver.accept(tile.objects);
+            }
         }
-        Log.comment(CONF_TEXT_CACHE_CLEAN);
-        tileCache = newTileCache; // copy over
+    }
+
+    /**
+     * provides extended cause logging
+     * 
+     * @param e
+     */
+    private void extendedLog(final Exception e) {
+        if (e.getCause() != null) {
+            Log.log(Log.LVL_NOTICE, e.toString() + "\n" + Log.printStack(e.getStackTrace(), 3) + "\nCaused by: "
+                    + e.getCause().toString() + "\n" + Log.printStack(e.getCause().getStackTrace(), 3), null);
+        } else {
+            Log.log(Log.LVL_NOTICE, e.toString() + "\n" + Log.printStack(e.getStackTrace(), 3), null);
+        }
     }
 
     /**
@@ -169,12 +220,23 @@ public class TileDriver implements IDataProvider {
                     { Double.valueOf(latTil * LAT_SIZE), Double.valueOf(lonTil * LON_SIZE) },
                     { Double.valueOf(latTil * LAT_SIZE), Double.valueOf(lonTil * LON_SIZE + LON_SIZE) },
                     { Double.valueOf(latTil * LAT_SIZE + LAT_SIZE), Double.valueOf(lonTil * LON_SIZE + LON_SIZE) },
-                    { Double.valueOf(latTil * LAT_SIZE + LAT_SIZE), Double.valueOf(lonTil * LON_SIZE) }, }, color, true));
-            // listener.draw(new DrawText(latTil * LAT_SIZE, lonTil * LON_SIZE,
-            // latTil
-            // + "," + lonTil,
-            // errorLoaded));
+                    { Double.valueOf(latTil * LAT_SIZE + LAT_SIZE), Double.valueOf(lonTil * LON_SIZE) }, }, color, false));
         }
+    }
+
+    /**
+     * check if there more than 10% free memory to perform fetch operation
+     * 
+     * @return
+     */
+    private boolean isFreeMem() {
+        final long freeMem = Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory()
+                + Runtime.getRuntime().freeMemory();
+        final long restPer = freeMem / (Runtime.getRuntime().maxMemory() / 100);
+        if (restPer > 10) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -243,5 +305,9 @@ public class TileDriver implements IDataProvider {
 
     public void setListener(final ActionListener listener) {
         drawListener = listener;
+    }
+
+    public String toString() {
+        return "Standard tile file driver";
     }
 }

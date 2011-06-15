@@ -1,3 +1,15 @@
+/**
+ * This file is part of XY.Gomps, Copyright 2011 (C) Xyan Kruse, Xyan@gmx.net, Xyan.kilu.de
+ *
+ * XY.Gomps is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ *
+ * XY.Gomps is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with XY.Gomps. If not, see
+ * <http://www.gnu.org/licenses/>.
+ */
 package net.xy.gps.client.awt;
 
 import java.awt.BasicStroke;
@@ -9,6 +21,7 @@ import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
+import java.awt.geom.Area;
 import java.awt.geom.Path2D;
 import java.awt.image.VolatileImage;
 import java.util.ArrayList;
@@ -22,6 +35,8 @@ import net.xy.gps.render.ICanvas;
 import net.xy.gps.render.IDrawAction;
 import net.xy.gps.render.ILayer;
 import net.xy.gps.render.draw.DrawArea;
+import net.xy.gps.render.draw.DrawGrid;
+import net.xy.gps.render.draw.DrawGrid.Path;
 import net.xy.gps.render.draw.DrawPoint;
 import net.xy.gps.render.draw.DrawPoly;
 import net.xy.gps.render.draw.DrawText;
@@ -41,11 +56,11 @@ public class AwtListener implements ActionListener {
     private static final ConfigKey CONF_TEXT_ACTION_BUFFERZOOM = Config.registerValues("renderer.action.bufferzoom",
             "Bufferzoom was rendered");
     private static final ConfigKey CONF_TEXT_UPDATE_ABBORTED = Config.registerValues("renderer.action.update.prepare",
-            "Prepare view for an complete update");
+            "Update is obsolete abborting");
     private static final ConfigKey CONF_TEXT_UPDATE_END = Config.registerValues("renderer.action.update.end",
             "Complete update ended succesfull");
     private static final ConfigKey CONF_TEXT_UPDATE_START = Config.registerValues("renderer.action.update.abborted",
-            "Update is obsolete abborting");
+            "Prepare view for an complete update");
     /**
      * holds graphics references
      */
@@ -163,6 +178,7 @@ public class AwtListener implements ActionListener {
                 drawBuffer.setColor(Color.WHITE);
                 drawBuffer.fillRect(0, 0, (int) canvas.getSize().width, (int) canvas.getSize().height);
                 displayBuffer.drawImage(backBufferImage, overWidth / 2 * -1 + disX * -1, overHeight / 2 * -1 + disY, null);
+                callLayers();
             }
         }
     }
@@ -176,7 +192,7 @@ public class AwtListener implements ActionListener {
     public void zoomBuffer(final double factor) {
         if (backBufferImage != null) {
             Log.comment(CONF_TEXT_ACTION_BUFFERZOOM);
-            // TODO remove zoom constant, destroy scaled instance after run
+            // TODO [9] remove zoom constant, destroy scaled instance after run
             final double amount = 1 + 0.2 * factor;
             final int newWidth = (int) ((canvas.getSize().width + overWidth) * amount);
             final int newHeight = (int) ((canvas.getSize().height + overHeight) * amount);
@@ -206,6 +222,9 @@ public class AwtListener implements ActionListener {
             case IDrawAction.ACTION_WAY:
                 draw((DrawPoly) action);
                 break;
+            case IDrawAction.ACTION_WAYGRID:
+                draw((DrawGrid) action);
+                break;
             case IDrawAction.ACTION_TEXT:
                 draw((DrawText) action);
                 break;
@@ -216,20 +235,56 @@ public class AwtListener implements ActionListener {
         }
     }
 
+    // TODO [5] gui draw only mode without size adjustions
+
+    /**
+     * draws multiple ways as one shape
+     * 
+     * @param action
+     */
+    private void draw(final DrawGrid action) {
+        if (drawBuffer instanceof Graphics2D) {
+            // construct outline
+            final Area grid = new Area();
+            for (final Iterator i = action.pathes.iterator(); i.hasNext();) {
+                final Path way = (Path) i.next();
+                final float width = (float) canvas.getWidth(way.width.floatValue());
+                final BasicStroke stroke = new BasicStroke(width, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND);
+                final Path2D path = new Path2D.Double();
+                path.moveTo(canvas.getX(way.path[0][1].doubleValue()), canvas.getY(way.path[0][0].doubleValue()));
+                for (int c = 1; c < way.path.length; c++) {
+                    path.lineTo(canvas.getX(way.path[c][1].doubleValue()), canvas.getY(way.path[c][0].doubleValue()));
+                }
+                grid.add(new Area(stroke.createStrokedShape(path)));
+            }
+            // draw
+            drawBuffer.setColor(new Color(action.color[0].intValue(), action.color[1].intValue(),
+                    action.color[2].intValue(), action.color[3].intValue()));
+            ((Graphics2D) drawBuffer).fill(grid);
+
+            // draw border
+            drawBuffer.setColor(Color.BLACK);
+            ((Graphics2D) drawBuffer).setStroke(new BasicStroke(0.25f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND));
+            ((Graphics2D) drawBuffer).draw(grid);
+        } else {
+            // TODO [9] draw grid support for non j2d2
+        }
+    }
+
     /**
      * draws an way or poly action
      * 
      * @param poly
      */
     private void draw(final DrawPoly poly) {
-        // TODO draw dashed or surounded
-        final float width = poly.width.floatValue() > 0 ? poly.width.floatValue() : 1;
+        // TODO [5] draw dashed lines or surounded pathes with borders
+        final float width = (float) canvas.getWidth(poly.width.floatValue());
         final Color mainColor = new Color(poly.color[0].intValue(), poly.color[1].intValue(), poly.color[2].intValue(),
                 poly.color[3].intValue());
 
         if (true && drawBuffer instanceof Graphics2D) { // surounded
             // construct outline
-            final BasicStroke stroke = new BasicStroke(width, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+            final BasicStroke stroke = new BasicStroke(width, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND);
             final Path2D path = new Path2D.Double();
             path.moveTo(canvas.getX(poly.path[0][1].doubleValue()), canvas.getY(poly.path[0][0].doubleValue()));
             for (int i = 1; i < poly.path.length; i++) {
@@ -241,14 +296,13 @@ public class AwtListener implements ActionListener {
             ((Graphics2D) drawBuffer).fill(street);
             if (width > 4) {
                 drawBuffer.setColor(Color.BLACK);
-                ((Graphics2D) drawBuffer).setStroke(new BasicStroke(0.25f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                ((Graphics2D) drawBuffer).setStroke(new BasicStroke(0.25f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND));
                 ((Graphics2D) drawBuffer).draw(street);
             }
         } else {
             if (false && drawBuffer instanceof Graphics2D) { // dashed
-                // TODO implement dashes
                 final float[] dash = new float[0];
-                ((Graphics2D) drawBuffer).setStroke(new BasicStroke(width, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1,
+                ((Graphics2D) drawBuffer).setStroke(new BasicStroke(width, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 1,
                         dash, 0.0f));
             }
             drawBuffer.setColor(mainColor);
@@ -292,11 +346,12 @@ public class AwtListener implements ActionListener {
         if (area.fill) {
             drawBuffer.fillPolygon(nx, ny, area.path.length);
         } else {
-            if (false && drawBuffer instanceof Graphics2D) { // TODO dashed area
+            if (false && drawBuffer instanceof Graphics2D) {
+                // TODO [9] dashed area
                 // ((Graphics2D) g).setStroke(new
                 // BasicStroke(poly.width.floatValue()
                 // > 0 ? poly.width
-                // .floatValue() : 1, BasicStroke.CAP_ROUND,
+                // .floatValue() : 1, BasicStroke.CAP_SQARE,
                 // BasicStroke.JOIN_ROUND,
                 // 1, dash, 0.0f));
             }
@@ -312,7 +367,7 @@ public class AwtListener implements ActionListener {
     private void draw(final DrawPoint point) {
         final int x = canvas.getX(point.lon);
         final int y = canvas.getY(point.lat);
-        // TODO optimize not drawing shapes beyonds the view
+        // TODO [9] optimize not drawing shapes beyonds the view, needed ?
         drawBuffer.setColor(new Color(point.color[0].intValue(), point.color[1].intValue(), point.color[2].intValue(),
                 point.color[3].intValue()));
         drawBuffer.drawRect(x - 2, y - 2, 4, 4);
