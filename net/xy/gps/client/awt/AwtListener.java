@@ -18,19 +18,23 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.Image;
+import java.awt.Paint;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
+import java.awt.TexturePaint;
 import java.awt.geom.Area;
 import java.awt.geom.Path2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.awt.image.VolatileImage;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 import net.xy.codebasel.Log;
-import net.xy.codebasel.config.Config;
-import net.xy.codebasel.config.Config.ConfigKey;
+import net.xy.codebasel.config.Cfg;
+import net.xy.codebasel.config.Cfg.Config;
 import net.xy.gps.render.ICanvas;
 import net.xy.gps.render.IDrawAction;
 import net.xy.gps.render.ILayer;
@@ -40,7 +44,7 @@ import net.xy.gps.render.draw.DrawGrid.Path;
 import net.xy.gps.render.draw.DrawPoint;
 import net.xy.gps.render.draw.DrawPoly;
 import net.xy.gps.render.draw.DrawText;
-import net.xy.gps.render.perspective.ActionListener;
+import net.xy.gps.render.perspective.IActionListener;
 import net.xy.gps.type.Dimension;
 
 /**
@@ -49,28 +53,33 @@ import net.xy.gps.type.Dimension;
  * @author Xyan
  * 
  */
-public class AwtListener implements ActionListener {
+public class AwtListener implements IActionListener {
     /**
      * message configuration
      */
-    private static final ConfigKey CONF_TEXT_ACTION_BUFFERZOOM = Config.registerValues("renderer.action.bufferzoom",
+    private static final Config TEXT_ACTION_BUFFERZOOM = Cfg.register("renderer.action.bufferzoom",
             "Bufferzoom was rendered");
-    private static final ConfigKey CONF_TEXT_UPDATE_ABBORTED = Config.registerValues("renderer.action.update.prepare",
+    private static final Config TEXT_UPDATE_ABBORTED = Cfg.register("renderer.action.update.prepare",
             "Update is obsolete abborting");
-    private static final ConfigKey CONF_TEXT_UPDATE_END = Config.registerValues("renderer.action.update.end",
+    private static final Config TEXT_UPDATE_END = Cfg.register("renderer.action.update.end",
             "Complete update ended succesfull");
-    private static final ConfigKey CONF_TEXT_UPDATE_START = Config.registerValues("renderer.action.update.abborted",
+    private static final Config TEXT_UPDATE_START = Cfg.register("renderer.action.update.abborted",
             "Prepare view for an complete update");
+    public static final Config CONF_RENDER_HQ = Cfg.register("renderer.render.hq", Boolean.TRUE);
+    public static final Config CONF_RENDER_ADDLAYER = Cfg.register("renderer.render.addlayer", Boolean.TRUE);
+    public static final Config CONF_RENDER_BUFFER = Cfg.register("renderer.render.buffer", Boolean.TRUE);
     /**
      * holds graphics references
      */
     private final GraphicsConfiguration gfxCfg;
     private final ICanvas canvas;
-    private final Graphics displayBuffer;
+    private Graphics displayBuffer;
     private Graphics drawBuffer;
     private VolatileImage drawBufferImage = null;
     // for move and repaint areas
     private Image backBufferImage = null;
+    // backup initial renderhints
+    private final RenderingHints hintsBack;
 
     /**
      * settings
@@ -93,6 +102,11 @@ public class AwtListener implements ActionListener {
     public AwtListener(final ICanvas canvas, final Graphics graphics, final GraphicsConfiguration gfxCfg) {
         this.canvas = canvas;
         this.gfxCfg = gfxCfg;
+        if (graphics instanceof Graphics2D) {
+            hintsBack = ((Graphics2D) graphics).getRenderingHints();
+        } else {
+            hintsBack = null;
+        }
         setHints(graphics);
         drawBuffer = displayBuffer = graphics;
         canvas.setListener(this); // registers on canvas
@@ -105,8 +119,18 @@ public class AwtListener implements ActionListener {
      */
     private Graphics setHints(final Graphics graphics) {
         if (graphics instanceof Graphics2D) {
+            ((Graphics2D) graphics).setRenderingHints(hintsBack);
+            if (Cfg.booleant(CONF_RENDER_HQ).booleanValue()) {
+                ((Graphics2D) graphics).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            } else {
+                ((Graphics2D) graphics)
+                        .setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+            }
             ((Graphics2D) graphics).setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
-            ((Graphics2D) graphics).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            ((Graphics2D) graphics).setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION,
+                    RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED);
+            ((Graphics2D) graphics).setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+                    RenderingHints.VALUE_STROKE_NORMALIZE);
         }
         return graphics;
     }
@@ -125,9 +149,11 @@ public class AwtListener implements ActionListener {
      * internally querys all layers to update
      */
     private void callLayers() {
-        for (final Iterator iterator = addLayers.iterator(); iterator.hasNext();) {
-            final ILayer layer = (ILayer) iterator.next();
-            layer.update();
+        if (Cfg.booleant(CONF_RENDER_ADDLAYER).booleanValue()) {
+            for (final Iterator iterator = addLayers.iterator(); iterator.hasNext();) {
+                final ILayer layer = (ILayer) iterator.next();
+                layer.update();
+            }
         }
     }
 
@@ -137,31 +163,43 @@ public class AwtListener implements ActionListener {
      * @param
      */
     public void updateStart() {
-        Log.comment(CONF_TEXT_UPDATE_START);
+        Log.comment(TEXT_UPDATE_START);
         final Dimension size = canvas.getSize();
         synchronized (this) {
-            overWidth = (int) (size.width * overscann);
-            overHeight = (int) (size.height * overscann);
-            drawBufferImage = gfxCfg.createCompatibleVolatileImage(//
-                    (int) size.width + overWidth, (int) size.height + overHeight);
-            drawBuffer = setHints(drawBufferImage.getGraphics());
-            drawBuffer.setColor(Color.WHITE);
-            drawBuffer.fillRect(0, 0, drawBufferImage.getWidth(), drawBufferImage.getHeight());
-            drawBuffer.translate(overWidth / 2, overHeight / 2);
+            final boolean doBackBuffer = Cfg.booleant(CONF_RENDER_BUFFER).booleanValue();
+            if (doBackBuffer) {
+                overWidth = (int) (size.width * overscann);
+                overHeight = (int) (size.height * overscann);
+                drawBufferImage = gfxCfg.createCompatibleVolatileImage(//
+                        (int) size.width + overWidth, (int) size.height + overHeight);
+                drawBuffer = setHints(drawBufferImage.getGraphics());
+                drawBuffer.setColor(Color.WHITE);
+                drawBuffer.fillRect(0, 0, drawBufferImage.getWidth(), drawBufferImage.getHeight());
+                drawBuffer.translate(overWidth / 2, overHeight / 2);
+            } else {
+                drawBufferImage = null;
+                drawBuffer = displayBuffer;
+                drawBuffer.setColor(Color.WHITE);
+                drawBuffer.fillRect(0, 0, (int) size.width, (int) size.height);
+            }
         }
     }
 
     public void updateEnd(final boolean success) {
         if (success) {
-            Log.comment(CONF_TEXT_UPDATE_END);
+            Log.comment(TEXT_UPDATE_END);
             synchronized (this) {
-                backBufferImage = drawBufferImage;
-                displayBuffer.drawImage(drawBufferImage, overWidth / 2 * -1, overHeight / 2 * -1, null);
+                if (Cfg.booleant(CONF_RENDER_BUFFER).booleanValue() && drawBufferImage != null) {
+                    backBufferImage = drawBufferImage;
+                    displayBuffer.drawImage(drawBufferImage, overWidth / 2 * -1, overHeight / 2 * -1, null);
+                } else {
+                    backBufferImage = null;
+                }
                 drawBuffer = displayBuffer;
                 callLayers(); // draw to display
             }
         } else {
-            Log.comment(CONF_TEXT_UPDATE_ABBORTED);
+            Log.comment(TEXT_UPDATE_ABBORTED);
             drawBuffer = displayBuffer;
         }
     }
@@ -175,10 +213,13 @@ public class AwtListener implements ActionListener {
     public void moveBuffer(final int disX, final int disY) {
         if (backBufferImage != null) {
             synchronized (this) {
-                drawBuffer.setColor(Color.WHITE);
-                drawBuffer.fillRect(0, 0, (int) canvas.getSize().width, (int) canvas.getSize().height);
-                displayBuffer.drawImage(backBufferImage, overWidth / 2 * -1 + disX * -1, overHeight / 2 * -1 + disY, null);
-                callLayers();
+                if (backBufferImage != null) {
+                    drawBuffer.setColor(Color.WHITE);
+                    drawBuffer.fillRect(0, 0, (int) canvas.getSize().width, (int) canvas.getSize().height);
+                    displayBuffer.drawImage(backBufferImage, overWidth / 2 * -1 + disX * -1, overHeight / 2 * -1 + disY,
+                            null);
+                    callLayers();
+                }
             }
         }
     }
@@ -191,14 +232,14 @@ public class AwtListener implements ActionListener {
      */
     public void zoomBuffer(final double factor) {
         if (backBufferImage != null) {
-            Log.comment(CONF_TEXT_ACTION_BUFFERZOOM);
+            Log.comment(TEXT_ACTION_BUFFERZOOM);
             // TODO [9] remove zoom constant, destroy scaled instance after run
             final double amount = 1 + 0.2 * factor;
             final int newWidth = (int) ((canvas.getSize().width + overWidth) * amount);
             final int newHeight = (int) ((canvas.getSize().height + overHeight) * amount);
             final int diffWidth = (int) (canvas.getSize().width + overWidth - newWidth); // 300
             final int diffHeight = (int) (canvas.getSize().height + overHeight - newHeight);
-            if (newWidth > 10 && newHeight > 10) {
+            if (newWidth > 10 && newHeight > 10 && backBufferImage != null) {
                 synchronized (this) {
                     final Image scaled = backBufferImage.getScaledInstance(newWidth, newHeight, Image.SCALE_FAST);
                     drawBuffer.setColor(Color.WHITE);
@@ -211,7 +252,17 @@ public class AwtListener implements ActionListener {
 
     public void draw(final IDrawAction action) {
         synchronized (this) {
-            final Stroke backup = drawBuffer instanceof Graphics2D ? ((Graphics2D) drawBuffer).getStroke() : null;
+            final Stroke backup;
+            final Paint bakPaint;
+            if (drawBuffer instanceof Graphics2D) {
+                backup = ((Graphics2D) drawBuffer).getStroke();
+                bakPaint = ((Graphics2D) drawBuffer).getPaint();
+                ;
+            } else {
+                backup = null;
+                bakPaint = null;
+                ;
+            }
             switch (action.getType()) {
             case IDrawAction.ACTION_POINT:
                 draw((DrawPoint) action);
@@ -229,8 +280,9 @@ public class AwtListener implements ActionListener {
                 draw((DrawText) action);
                 break;
             }
-            if (drawBuffer instanceof Graphics2D && backup != null) {
+            if (backup != null || bakPaint != null) {
                 ((Graphics2D) drawBuffer).setStroke(backup);
+                ((Graphics2D) drawBuffer).setPaint(bakPaint);
             }
         }
     }
@@ -263,11 +315,27 @@ public class AwtListener implements ActionListener {
             ((Graphics2D) drawBuffer).fill(grid);
 
             // draw border
-            drawBuffer.setColor(Color.BLACK);
-            ((Graphics2D) drawBuffer).setStroke(new BasicStroke(0.25f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND));
-            ((Graphics2D) drawBuffer).draw(grid);
+            if (true) {
+                drawBuffer.setColor(Color.BLACK);
+                final boolean dashing = action.border.length > 0;
+                if (dashing) {
+                    final float[] dash = new float[action.border.length];
+                    for (int i = 0; i < action.border.length; i++) {
+                        dash[1] = (float) canvas.getWidth(action.border[i].doubleValue());
+                    }
+                    ((Graphics2D) drawBuffer).setStroke(new BasicStroke(0.25f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND,
+                            1, dash, 0f));
+                } else {
+                    ((Graphics2D) drawBuffer)
+                            .setStroke(new BasicStroke(0.25f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND));
+                }
+                ((Graphics2D) drawBuffer).draw(grid);
+            }
         } else {
-            // TODO [9] draw grid support for non j2d2
+            for (final Iterator i = action.pathes.iterator(); i.hasNext();) {
+                final Path way = (Path) i.next();
+                draw(new DrawPoly(way.path, action.color, way.width));
+            }
         }
     }
 
@@ -277,14 +345,24 @@ public class AwtListener implements ActionListener {
      * @param poly
      */
     private void draw(final DrawPoly poly) {
-        // TODO [5] draw dashed lines or surounded pathes with borders
         final float width = (float) canvas.getWidth(poly.width.floatValue());
         final Color mainColor = new Color(poly.color[0].intValue(), poly.color[1].intValue(), poly.color[2].intValue(),
                 poly.color[3].intValue());
 
-        if (true && drawBuffer instanceof Graphics2D) { // surounded
+        if (poly.width.doubleValue() > 0 && drawBuffer instanceof Graphics2D) {
+            // thick path with border
             // construct outline
-            final BasicStroke stroke = new BasicStroke(width, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND);
+            final BasicStroke stroke;
+            final boolean dashing = poly.dashes.length > 0;
+            if (dashing) {
+                final float[] dash = new float[poly.dashes.length];
+                for (int i = 0; i < poly.dashes.length; i++) {
+                    dash[1] = (float) canvas.getWidth(poly.dashes[i].doubleValue());
+                }
+                stroke = new BasicStroke(width, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 1, dash, 0.0f);
+            } else {
+                stroke = new BasicStroke(width, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND);
+            }
             final Path2D path = new Path2D.Double();
             path.moveTo(canvas.getX(poly.path[0][1].doubleValue()), canvas.getY(poly.path[0][0].doubleValue()));
             for (int i = 1; i < poly.path.length; i++) {
@@ -294,15 +372,18 @@ public class AwtListener implements ActionListener {
             // draw
             drawBuffer.setColor(mainColor);
             ((Graphics2D) drawBuffer).fill(street);
-            if (width > 4) {
+            if (!dashing && width > 6) {
                 drawBuffer.setColor(Color.BLACK);
                 ((Graphics2D) drawBuffer).setStroke(new BasicStroke(0.25f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND));
                 ((Graphics2D) drawBuffer).draw(street);
             }
-        } else {
-            if (false && drawBuffer instanceof Graphics2D) { // dashed
-                final float[] dash = new float[0];
-                ((Graphics2D) drawBuffer).setStroke(new BasicStroke(width, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 1,
+        } else { // linedraw only
+            if (poly.dashes.length > 0 && drawBuffer instanceof Graphics2D) { // dashed
+                final float[] dash = new float[poly.dashes.length];
+                for (int i = 0; i < poly.dashes.length; i++) {
+                    dash[1] = (float) canvas.getWidth(poly.dashes[i].doubleValue());
+                }
+                ((Graphics2D) drawBuffer).setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 1,
                         dash, 0.0f));
             }
             drawBuffer.setColor(mainColor);
@@ -341,20 +422,33 @@ public class AwtListener implements ActionListener {
             nx[i] = canvas.getX(area.path[i][1].doubleValue());
             ny[i] = canvas.getY(area.path[i][0].doubleValue());
         }
-        drawBuffer.setColor(new Color(area.color[0].intValue(), area.color[1].intValue(), area.color[2].intValue(),
-                area.color[3].intValue()));
         if (area.fill) {
+            drawBuffer.setColor(new Color(area.color[0].intValue(), area.color[1].intValue(), area.color[2].intValue(),
+                    area.color[3].intValue()));
             drawBuffer.fillPolygon(nx, ny, area.path.length);
-        } else {
-            if (false && drawBuffer instanceof Graphics2D) {
-                // TODO [9] dashed area
-                // ((Graphics2D) g).setStroke(new
-                // BasicStroke(poly.width.floatValue()
-                // > 0 ? poly.width
-                // .floatValue() : 1, BasicStroke.CAP_SQARE,
-                // BasicStroke.JOIN_ROUND,
-                // 1, dash, 0.0f));
+            if (area.image != null && drawBuffer instanceof Graphics2D) { // draw
+                                                                          // texture
+                // TODO [DONE] draw texture
+                final BufferedImage img = ImagePool.get(area.image);
+                final Paint bakPaint = ((Graphics2D) drawBuffer).getPaint();
+                ((Graphics2D) drawBuffer).setPaint(new TexturePaint(img, new Rectangle2D.Float(0, 0, img.getWidth(), img
+                        .getHeight())));
+                drawBuffer.fillPolygon(nx, ny, area.path.length);
+                ((Graphics2D) drawBuffer).setPaint(bakPaint);
             }
+        }
+        if (area.border.length > 0 || !area.fill) {
+            if (area.border.length > 0 && drawBuffer instanceof Graphics2D) {
+                // TODO [DONE] dashed area
+                final float[] dash = new float[area.border.length];
+                for (int i = 0; i < area.border.length; i++) {
+                    dash[1] = (float) canvas.getWidth(area.border[i].doubleValue());
+                }
+                ((Graphics2D) drawBuffer).setStroke(new BasicStroke(2, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_ROUND, 1,
+                        dash, 0.0f));
+            }
+            drawBuffer.setColor(new Color(area.borderColor[0].intValue(), area.borderColor[1].intValue(),
+                    area.borderColor[2].intValue(), area.borderColor[3].intValue()));
             drawBuffer.drawPolygon(nx, ny, area.path.length);
         }
     }
@@ -367,9 +461,24 @@ public class AwtListener implements ActionListener {
     private void draw(final DrawPoint point) {
         final int x = canvas.getX(point.lon);
         final int y = canvas.getY(point.lat);
-        // TODO [9] optimize not drawing shapes beyonds the view, needed ?
-        drawBuffer.setColor(new Color(point.color[0].intValue(), point.color[1].intValue(), point.color[2].intValue(),
-                point.color[3].intValue()));
-        drawBuffer.drawRect(x - 2, y - 2, 4, 4);
+        if (point.image != null && drawBuffer instanceof Graphics2D) {
+            final BufferedImage img = ImagePool.get(point.image);
+            ((Graphics2D) drawBuffer).setPaint(new TexturePaint(img, new Rectangle2D.Float(0, 0, img.getWidth(), img
+                    .getHeight())));
+            drawBuffer.drawRect(x - img.getWidth() / 2, y - img.getHeight() / 2, img.getWidth(), img.getHeight());
+        } else {
+            drawBuffer.setColor(new Color(point.color[0].intValue(), point.color[1].intValue(), point.color[2].intValue(),
+                    point.color[3].intValue()));
+            drawBuffer.drawRect(x - 2, y - 2, 4, 4);
+        }
+    }
+
+    /**
+     * refreshes the graphics object used as displaybuffer
+     * 
+     * @param displayBuffer
+     */
+    public void setDisplayBuffer(final Graphics displayBuffer) {
+        this.displayBuffer = displayBuffer;
     }
 }

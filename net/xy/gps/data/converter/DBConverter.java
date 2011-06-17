@@ -20,8 +20,8 @@ import javax.xml.stream.XMLStreamException;
 
 import net.xy.codebasel.Log;
 import net.xy.codebasel.Utils;
-import net.xy.codebasel.config.Config;
-import net.xy.codebasel.config.Config.ConfigKey;
+import net.xy.codebasel.config.Cfg;
+import net.xy.codebasel.config.Cfg.Config;
 import net.xy.gps.data.IDataObject;
 import net.xy.gps.data.PoiData;
 import net.xy.gps.data.converter.StaxOsmParser.IObjectListener;
@@ -36,66 +36,64 @@ import net.xy.gps.data.tag.TagFactory;
  * 
  */
 public class DBConverter {
-  /**
-   * progress in percentage
-   */
-  private static int state = 0;
-  /**
-   * xm source name
-   */
-  private static final ConfigKey CONF_XML_FILE = Config.registerValues("source",
-      "osm/xml/bremen.osm");
-  private static final ConfigKey CONF_CONV_END = Config.registerValues("converter.end",
-      "Done with parsing Creating tiles");
+    /**
+     * progress in percentage
+     */
+    private static int state = 0;
+    /**
+     * xm source name
+     */
+    public static final Config CONF_XML_FILE = Cfg.register("converter.source", "osm/xml/bremen.osm");
+    private static final Config TEXT_CONV_END = Cfg.register("converter.end", "Done with parsing Creating tiles");
 
-  /**
-   * @param args
-   */
-  public static void main(final String[] args) {
-    try {
-      new TagConfiguration("net/xy/gps/data/tag/tags.conf.xml", new TagFactory());
-    } catch (final IOException e) {
-      throw new RuntimeException(e);
-    } catch (final XMLStreamException e) {
-      throw new RuntimeException(e);
-    }
-    final File in = new File(Config.getString(CONF_XML_FILE));
-    final Thread parse = new Thread(new Runnable() {
-
-      public void run() {
+    /**
+     * @param args
+     */
+    public static void main(final String[] args) {
         try {
-          final HSQLDriver hsql = new HSQLDriver();
-          hsql.resetTables();
-          StaxOsmParser.parse(in, new IObjectListener() {
-
-            public void put(final IDataObject data) {
-              if (data instanceof PoiData) {
-                hsql.addNode((PoiData) data);
-              }
-            }
-
-            public void putWay(final int id, final List nodes, final Integer[] tags) {
-              hsql.convertWay(id, nodes, tags);
-            }
-
-            public void state(final long per) {
-              DBConverter.state = (int) per;
-            }
-          });
-          hsql.cleanWayAssociated();
-        } catch (final Throwable e) {
-          e.printStackTrace();
-          System.exit(1);
+            new TagConfiguration(Cfg.string(TagConfiguration.CONF_TAG_CONF), new TagFactory());
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        } catch (final XMLStreamException e) {
+            throw new RuntimeException(e);
         }
-      }
-    });
-    parse.setPriority(Thread.MIN_PRIORITY);
-    parse.start();
-    while (parse.isAlive()) {
-      System.out.println(state + "%");
-      Utils.sleep(1000);
+        final File in = new File(Cfg.string(CONF_XML_FILE));
+        final Thread parse = new Thread(new Runnable() {
+
+            public void run() {
+                try {
+                    final HSQLDriver hsql = new HSQLDriver();
+                    hsql.resetTables();
+                    StaxOsmParser.parse(in, new IObjectListener() {
+
+                        public void put(final IDataObject data) {
+                            if (data instanceof PoiData) {
+                                hsql.addNode((PoiData) data);
+                            }
+                        }
+
+                        public void putWay(final int id, final List nodes, final Integer[] tags) {
+                            hsql.convertWay(id, nodes, tags);
+                        }
+
+                        public void state(final long per) {
+                            DBConverter.state = (int) per;
+                        }
+                    });
+                    hsql.cleanWayAssociated();
+                } catch (final Throwable e) {
+                    e.printStackTrace();
+                    System.exit(1);
+                }
+            }
+        });
+        parse.setPriority(Thread.MIN_PRIORITY);
+        parse.start();
+        while (parse.isAlive()) {
+            System.out.println(state + "%");
+            Utils.sleep(1000);
+        }
+        Log.trace(TEXT_CONV_END);
+        TileCreator.main(args);
     }
-    Log.trace(CONF_CONV_END);
-    TileCreator.main(args);
-  }
 }

@@ -13,6 +13,8 @@
 package net.xy.gps.render.layer;
 
 import net.xy.gps.data.IDataObject;
+import net.xy.gps.data.tag.Tag;
+import net.xy.gps.data.tag.TagFactory;
 import net.xy.gps.render.draw.DrawPoint;
 
 /**
@@ -22,13 +24,20 @@ import net.xy.gps.render.draw.DrawPoint;
  * 
  */
 public class NodeLayer extends SimpleLayer {
-  public void addObject(final IDataObject object) {
-    if (IDataObject.DATA_POINT == object.getType()) {
-      super.addObject(object);
+    public void addObject(final IDataObject object) {
+        if (IDataObject.DATA_POINT == object.getType()) {
+            super.addObject(object);
+        }
     }
-  }
 
-  protected void draw(final IDataObject robj) {
-    listener.draw(new DrawPoint(robj.getPosition().lat, robj.getPosition().lon, BASERGB));
-  }
+    protected void draw(final IDataObject robj) {
+        if (robj.getTags() != null && robj.getTags().length > 0) {
+            final Tag tag = TagFactory.getTag(robj.getTags()[0]);
+            if (tag.style.image != null) {
+                listener.draw(new DrawPoint(robj.getPosition().lat, robj.getPosition().lon, BASERGB, tag.style.image));
+                return;
+            }
+        }
+        listener.draw(new DrawPoint(robj.getPosition().lat, robj.getPosition().lon, BASERGB));
+    }
 }

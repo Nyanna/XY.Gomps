@@ -20,28 +20,29 @@ package net.xy.gps.data.tag.impl;
  * 
  */
 public class Style {
-  /**
-   * if an area should it be filled
-   */
-  public Boolean fill = null;
-  /**
-   * line color
-   */
-  public Integer[] color = new Integer[4];
-  /**
-   * if line width of the line in meters
-   */
-  public Integer width = Integer.valueOf(2); // default of 2 meters
-  /**
-   * if borders should be rendered
-   */
-  public Boolean borders = null;
-  /**
-   * if borders enabled their color
-   */
-  public Integer[] borderColor = new Integer[4];
-  /**
-   * if this an node render with an image instead
-   */
-  public String image = null;
+    /**
+     * if an area should it be filled
+     */
+    public Boolean fill = Boolean.FALSE;
+    /**
+     * line color
+     */
+    public Integer[] color = new Integer[] { Integer.valueOf(0), Integer.valueOf(0), Integer.valueOf(0),
+            Integer.valueOf(255) };
+    /**
+     * if line width of the line in meters
+     */
+    public Integer width = Integer.valueOf(0);
+    /**
+     * if borders should be rendered
+     */
+    public Float[] border = new Float[0];
+    /**
+     * if borders enabled their color
+     */
+    public Integer[] borderColor = color;
+    /**
+     * if this an node render with an image instead
+     */
+    public String image = null;
 }

@@ -15,8 +15,8 @@ package net.xy.gps.render.perspective;
 import net.xy.codebasel.Log;
 import net.xy.codebasel.ObjectArray;
 import net.xy.codebasel.ThreadLocal;
-import net.xy.codebasel.config.Config;
-import net.xy.codebasel.config.Config.ConfigKey;
+import net.xy.codebasel.config.Cfg;
+import net.xy.codebasel.config.Cfg.Config;
 import net.xy.gps.render.ICanvas;
 import net.xy.gps.render.IDrawAction;
 import net.xy.gps.render.ILayer;
@@ -29,9 +29,9 @@ public class Action2DView implements ICanvas {
     /**
      * message configuration
      */
-    private static final ConfigKey CONF_TEXT_UPDATE_CALL = Config.registerValues("canvas.update.call",
+    private static final Config TEXT_UPDATE_CALL = Cfg.register("canvas.update.call",
             "Update was called preparing and relying to layers");
-    private static final ConfigKey CONF_TEXT_SIZE_CHANGED = Config.registerValues("canvas.action.size.changed",
+    private static final Config TEXT_SIZE_CHANGED = Cfg.register("canvas.action.size.changed",
             "Canvas output view size has changed");
     /**
      * stores the layers
@@ -49,7 +49,7 @@ public class Action2DView implements ICanvas {
     /**
      * rendering adapter
      */
-    private ActionListener listener;
+    private IActionListener listener;
     /**
      * indicates if sicne tha last complete update the view was changed
      */
@@ -68,7 +68,7 @@ public class Action2DView implements ICanvas {
     public int addLayer(final ILayer layer) {
         layers.add(layer);
         final int index = layers.getLastIndex();
-        layer.setListener(new ActionListener() {
+        layer.setListener(new IActionListener() {
 
             public void draw(final IDrawAction action) {
                 listener.draw(action);
@@ -113,7 +113,7 @@ public class Action2DView implements ICanvas {
     }
 
     public void setSize(final int width, final int height) {
-        Log.comment(CONF_TEXT_SIZE_CHANGED);
+        Log.comment(TEXT_SIZE_CHANGED);
         final double ratio = (double) width / height;
         if (displaySize == null || width != displaySize.width || height != (int) displaySize.width * ratio) {
             displaySize = new Dimension(width, height);
@@ -169,7 +169,7 @@ public class Action2DView implements ICanvas {
     }
 
     public void update() {
-        Log.comment(CONF_TEXT_UPDATE_CALL);
+        Log.comment(TEXT_UPDATE_CALL);
         listener.updateStart(); // prepare view
         final Object[] layers = this.layers.get();
         for (int i = 0; i < layers.length; i++) {
@@ -184,7 +184,7 @@ public class Action2DView implements ICanvas {
         listener.updateEnd(true);
     }
 
-    public void setListener(final ActionListener listener) {
+    public void setListener(final IActionListener listener) {
         this.listener = listener;
     }
 

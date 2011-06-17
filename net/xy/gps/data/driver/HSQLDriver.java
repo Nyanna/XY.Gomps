@@ -25,15 +25,15 @@ import net.xy.codebasel.LogError;
 import net.xy.codebasel.LogWarning;
 import net.xy.codebasel.ObjectArray;
 import net.xy.codebasel.ThreadLocal;
-import net.xy.codebasel.config.Config;
-import net.xy.codebasel.config.Config.ConfigKey;
+import net.xy.codebasel.config.Cfg;
+import net.xy.codebasel.config.Cfg.Config;
 import net.xy.gps.data.IDataObject;
 import net.xy.gps.data.IDataProvider;
 import net.xy.gps.data.PoiData;
 import net.xy.gps.data.WayData;
 import net.xy.gps.data.tag.Tag;
 import net.xy.gps.data.tag.TagFactory;
-import net.xy.gps.render.perspective.ActionListener;
+import net.xy.gps.render.perspective.IActionListener;
 import net.xy.gps.type.Boundary;
 import net.xy.gps.type.Dimension;
 import net.xy.gps.type.Point;
@@ -47,25 +47,24 @@ import net.xy.gps.type.Rectangle;
  */
 public class HSQLDriver implements IDataProvider {
     /**
-     * configuration & messages
+     * configuration
      */
-    private static final ConfigKey CONF_DB_SOURCE = Config.registerValues("osm.source.db.connection",
+    public static final Config CONF_DB_SOURCE = Cfg.register("osm.source.db.connection",
             "jdbc:hsqldb:file:osm/data;shutdown=true");
-    private static final ConfigKey CONF_DB_COLLECTED_NODES = Config.registerValues("osm.source.collected.nodes",
-            "Got Nodes");
-    private static final ConfigKey CONF_DB_COLLECTED_WAYS = Config.registerValues("osm.source.collected.ways",
-            "Got Ways");
-    private static final ConfigKey CONF_DB_ERROR_DO = Config.registerValues("osm.source.error.do",
-            "Error on accessing DB");
-    private static final ConfigKey CONF_DB_ERROR_RESET = Config.registerValues("osm.source.error.reset",
-            "Error on reset DB");
-    private static final ConfigKey CONF_DB_ERROR_ADDNODE = Config.registerValues("osm.source.error.addnode",
+    /**
+     * messages
+     */
+    private static final Config TEXT_DB_COLLECTED_NODES = Cfg.register("osm.source.collected.nodes", "Got Nodes");
+    private static final Config TEXT_DB_COLLECTED_WAYS = Cfg.register("osm.source.collected.ways", "Got Ways");
+    private static final Config TEXT_DB_ERROR_DO = Cfg.register("osm.source.error.do", "Error on accessing DB");
+    private static final Config TEXT_DB_ERROR_RESET = Cfg.register("osm.source.error.reset", "Error on reset DB");
+    private static final Config TEXT_DB_ERROR_ADDNODE = Cfg.register("osm.source.error.addnode",
             "Error on adding an node");
-    private static final ConfigKey CONF_DB_ERROR_WAY_COVERT = Config.registerValues("osm.source.error.way.convert",
+    private static final Config TEXT_DB_ERROR_WAY_COVERT = Cfg.register("osm.source.error.way.convert",
             "Error on converting an way");
-    private static final ConfigKey CONF_DB_ERROR_CLEAN_NODES = Config.registerValues("osm.source.error.clean.nodes",
+    private static final Config TEXT_DB_ERROR_CLEAN_NODES = Cfg.register("osm.source.error.clean.nodes",
             "Error on cleaning way covered nodes");
-    private static final ConfigKey CONF_DB_ERROR_BOUNDS = Config.registerValues("osm.source.error.bounds",
+    private static final Config TEXT_DB_ERROR_BOUNDS = Cfg.register("osm.source.error.bounds",
             "Error on retrieving db boundaries");
     /**
      * stores the connection
@@ -78,8 +77,7 @@ public class HSQLDriver implements IDataProvider {
      * @throws SQLException
      */
     public HSQLDriver() throws SQLException {
-        ThreadLocal.set(Boolean.FALSE);
-        c = DriverManager.getConnection(Config.getString(CONF_DB_SOURCE), "SA", "");
+        c = DriverManager.getConnection(Cfg.string(CONF_DB_SOURCE), "SA", "");
     }
 
     public void get(final Rectangle bounds, final IDataReceiver receiver) {
@@ -107,7 +105,7 @@ public class HSQLDriver implements IDataProvider {
                         result.getInt("id"), itags) });
                 nodes++;
             }
-            Log.notice(CONF_DB_COLLECTED_NODES, new Object[] { Integer.valueOf(nodes) });
+            Log.notice(TEXT_DB_COLLECTED_NODES, new Object[] { Integer.valueOf(nodes) });
             // target boundingbox is in view //START
             final double boxlatstart = bounds.origin.lat;
             final double boxlonstart = bounds.origin.lon;
@@ -162,9 +160,9 @@ public class HSQLDriver implements IDataProvider {
                 receiver.accept(new IDataObject[] { new WayData(result.getInt("id"), cords, itags) });
                 ways++;
             }
-            Log.notice(CONF_DB_COLLECTED_WAYS, new Object[] { Integer.valueOf(ways) });
+            Log.notice(TEXT_DB_COLLECTED_WAYS, new Object[] { Integer.valueOf(ways) });
         } catch (final SQLException e) {
-            throw new LogCritical(CONF_DB_ERROR_DO, e);
+            throw new LogCritical(TEXT_DB_ERROR_DO, e);
         }
     }
 
@@ -189,7 +187,7 @@ public class HSQLDriver implements IDataProvider {
             query.execute("DROP TABLE IF EXISTS waytags");
             query.execute("CREATE TABLE waytags (tagid IDENTITY, wayid INTEGER, type INTEGER)");
         } catch (final SQLException e) {
-            throw new LogCritical(CONF_DB_ERROR_RESET, e);
+            throw new LogCritical(TEXT_DB_ERROR_RESET, e);
         }
     }
 
@@ -218,7 +216,7 @@ public class HSQLDriver implements IDataProvider {
             }
             query.close();
         } catch (final SQLException e) {
-            throw new LogCritical(CONF_DB_ERROR_ADDNODE, e);
+            throw new LogCritical(TEXT_DB_ERROR_ADDNODE, e);
         }
     }
 
@@ -275,7 +273,7 @@ public class HSQLDriver implements IDataProvider {
             }
             query.close();
         } catch (final SQLException e) {
-            throw new LogCritical(CONF_DB_ERROR_WAY_COVERT, e, new Object[] { Integer.valueOf(id), nodes, qstr });
+            throw new LogCritical(TEXT_DB_ERROR_WAY_COVERT, e, new Object[] { Integer.valueOf(id), nodes, qstr });
         }
     }
 
@@ -293,7 +291,7 @@ public class HSQLDriver implements IDataProvider {
             query.execute("CREATE TABLE waynodes (wayid INTEGER, nodeid INTEGER)");
             query.close();
         } catch (final SQLException e) {
-            throw new LogWarning(CONF_DB_ERROR_CLEAN_NODES, e);
+            throw new LogWarning(TEXT_DB_ERROR_CLEAN_NODES, e);
         }
     }
 
@@ -325,12 +323,12 @@ public class HSQLDriver implements IDataProvider {
                 }
             }
         } catch (final SQLException e) {
-            throw new LogError(CONF_DB_ERROR_BOUNDS, e);
+            throw new LogError(TEXT_DB_ERROR_BOUNDS, e);
         }
         return new Rectangle(new Point(0, 0), new Dimension());
     }
 
-    public void setListener(final ActionListener listener) {
+    public void setListener(final IActionListener listener) {
         // No visual output for db
     }
 }

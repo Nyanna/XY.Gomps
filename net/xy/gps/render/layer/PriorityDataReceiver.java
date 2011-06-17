@@ -19,8 +19,8 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import net.xy.codebasel.Log;
-import net.xy.codebasel.config.Config;
-import net.xy.codebasel.config.Config.ConfigKey;
+import net.xy.codebasel.config.Cfg;
+import net.xy.codebasel.config.Cfg.Config;
 import net.xy.gps.data.IDataObject;
 import net.xy.gps.data.IDataProvider.IDataReceiver;
 import net.xy.gps.data.tag.Tag;
@@ -38,22 +38,22 @@ public class PriorityDataReceiver implements IDataReceiver {
     /**
      * holds the types priority configurations
      */
-    private static final ConfigKey[] CONF_TYPES_PRIORITY = new ConfigKey[IDataObject.COUNT_DATA];
-    private static final ConfigKey[] CONF_TYPES_ENABLED = new ConfigKey[IDataObject.COUNT_DATA];
+    private static final Config[] CONF_TYPES_PRIORITY = new Config[IDataObject.COUNT_DATA];
+    private static final Config[] CONF_TYPES_ENABLED = new Config[IDataObject.COUNT_DATA];
     static {
         final String baseTypesPrio = "type.priority.";
         final String baseTypesOn = "type.enabled.";
-        CONF_TYPES_PRIORITY[0] = Config.registerValues(baseTypesPrio + "DATA_POINT", Integer.valueOf(103));
-        CONF_TYPES_ENABLED[0] = Config.registerValues(baseTypesOn + "DATA_POINT", Boolean.TRUE);
-        CONF_TYPES_PRIORITY[1] = Config.registerValues(baseTypesPrio + "DATA_WAY", Integer.valueOf(102));
-        CONF_TYPES_ENABLED[1] = Config.registerValues(baseTypesOn + "DATA_WAY", Boolean.TRUE);
-        CONF_TYPES_PRIORITY[2] = Config.registerValues(baseTypesPrio + "DATA_AREA", Integer.valueOf(101));
-        CONF_TYPES_ENABLED[2] = Config.registerValues(baseTypesOn + "DATA_AREA", Boolean.TRUE);
+        CONF_TYPES_PRIORITY[0] = Cfg.register(baseTypesPrio + "DATA_POINT", Integer.valueOf(103));
+        CONF_TYPES_ENABLED[0] = Cfg.register(baseTypesOn + "DATA_POINT", Boolean.TRUE);
+        CONF_TYPES_PRIORITY[1] = Cfg.register(baseTypesPrio + "DATA_WAY", Integer.valueOf(102));
+        CONF_TYPES_ENABLED[1] = Cfg.register(baseTypesOn + "DATA_WAY", Boolean.TRUE);
+        CONF_TYPES_PRIORITY[2] = Cfg.register(baseTypesPrio + "DATA_AREA", Integer.valueOf(101));
+        CONF_TYPES_ENABLED[2] = Cfg.register(baseTypesOn + "DATA_AREA", Boolean.TRUE);
     }
     /**
      * message configuration
      */
-    private static final ConfigKey CONF_TEXT_LAYERS_CLEAR = Config.registerValues("data.adapter.layers.cleared",
+    private static final Config TEXT_LAYERS_CLEAR = Cfg.register("data.adapter.layers.cleared",
             "Removing all data from all layers");
     /**
      * stores all the layers after their priority
@@ -101,7 +101,7 @@ public class PriorityDataReceiver implements IDataReceiver {
      */
     private Integer evalPriority(final IDataObject dat) {
         // abbort if types is hidden
-        if (!Config.getBoolean(CONF_TYPES_ENABLED[dat.getType()]).booleanValue()) {
+        if (!Cfg.booleant(CONF_TYPES_ENABLED[dat.getType()]).booleanValue()) {
             return null;
         }
 
@@ -109,7 +109,7 @@ public class PriorityDataReceiver implements IDataReceiver {
             int priority = -1;
             for (int j = 0; j < dat.getTags().length; j++) {
                 final Tag tag = TagFactory.getTag(dat.getTags()[j]);
-                if (!tag.enabled.booleanValue()) {
+                if (tag == null || !tag.enabled.booleanValue()) {
                     continue;
                 }
                 if (tag.priority.intValue() > priority) {
@@ -122,7 +122,7 @@ public class PriorityDataReceiver implements IDataReceiver {
             return null;
         }
         // else use type
-        return Config.getInteger(CONF_TYPES_PRIORITY[dat.getType()]);
+        return Cfg.integer(CONF_TYPES_PRIORITY[dat.getType()]);
     }
 
     /**
@@ -177,7 +177,7 @@ public class PriorityDataReceiver implements IDataReceiver {
      * calls clear method on all layers
      */
     public void clearLayers() {
-        Log.comment(CONF_TEXT_LAYERS_CLEAR);
+        Log.comment(TEXT_LAYERS_CLEAR);
         for (final Iterator iterator = layers.values().iterator(); iterator.hasNext();) {
             final List layerList = (List) iterator.next();
             for (final Iterator iterator2 = layerList.iterator(); iterator2.hasNext();) {

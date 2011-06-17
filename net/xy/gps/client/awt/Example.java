@@ -12,8 +12,8 @@
  */
 package net.xy.gps.client.awt;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Frame;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
@@ -30,12 +30,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+
 import net.xy.codebasel.Log;
 import net.xy.codebasel.ThreadLocal;
 import net.xy.codebasel.Utils;
-import net.xy.codebasel.config.Config;
-import net.xy.codebasel.config.Config.ConfigKey;
+import net.xy.codebasel.config.Cfg;
+import net.xy.codebasel.config.Cfg.Config;
 import net.xy.codebasel.config.TextPropertyRetriever;
+import net.xy.gps.client.awt.config.ConfigMenuBar;
 import net.xy.gps.data.IDataProvider;
 import net.xy.gps.data.driver.HSQLDriver;
 import net.xy.gps.data.driver.TileDriver;
@@ -52,44 +56,56 @@ import net.xy.gps.render.perspective.MoveUtils;
 import net.xy.gps.render.perspective.MoveUtils.IChangeNotifier;
 import net.xy.gps.type.Rectangle;
 
+/**
+ * main class for java se and swing
+ * 
+ * @author Xyan
+ * 
+ */
 public class Example {
     private static final long serialVersionUID = -6720509574401297090L;
 
     /**
      * configuration
      */
-    private static final int CONF_DATAPROVIDER_DB = 0; // conf const
-    private static final int CONF_DATAPROVIDER_TILES = 1; // conf const
-    private static final ConfigKey CONF_DATA_PROVIDER = Config.registerValues("main.dataprovider",
-            Integer.valueOf(CONF_DATAPROVIDER_DB));
+    public static final int CONF_DATAPROVIDER_DB = 0; // conf const
+    public static final int CONF_DATAPROVIDER_TILES = 1; // conf const
+    public static final Config CONF_DATA_PROVIDER = Cfg.register("main.dataprovider",
+            Integer.valueOf(CONF_DATAPROVIDER_TILES));
+    public static final Config CONF_EVENT_ACCEL = Cfg.register("main.event.move.acceleration", Double.valueOf(1.1d));
+    public static final Config CONF_EVENT_ACCEL_LIMIT = Cfg.register("main.event.move.acceleration.limt",
+            Double.valueOf(18d));
+    public static final Config CONF_EVENT_LOOPGAP = Cfg.register("main.event.loopgap", Integer.valueOf(40));
     /**
      * messages
      */
-    private static final ConfigKey CONF_TEXT_INIT_DATAPROVIDER = Config.registerValues("main.init.provider",
-            "Initializing data provider");
-    private static final ConfigKey CONF_TEXT_INIT_EVENT_LISTENERS = Config.registerValues("main.init.events",
+    private static final Config TEXT_INIT_DATAPROVIDER = Cfg.register("main.init.provider", "Initializing data provider");
+    private static final Config TEXT_INIT_EVENT_LISTENERS = Cfg.register("main.init.events",
             "Initializing event listeners and adapters");
-    private static final ConfigKey CONF_TEXT_INIT_CONFIGURATION = Config.registerValues("main.init.conf",
+    private static final Config TEXT_INIT_CONFIGURATION = Cfg.register("main.init.conf",
             "Initializing application configuration");
-    private static final ConfigKey CONF_TEXT_INIT_DATATHREAD = Config.registerValues("main.init.thread.data",
+    private static final Config TEXT_INIT_DATATHREAD = Cfg.register("main.init.thread.data",
             "Starting data collection thread");
-    private static final ConfigKey CONF_TEXT_INIT_PAINTTHREAD = Config.registerValues("main.init.thread.paint",
+    private static final Config TEXT_INIT_PAINTTHREAD = Cfg.register("main.init.thread.paint",
             "Starting painting and redering thread");
-    private static final ConfigKey CONF_TEXT_ERROR_THREAD_CRASH = Config.registerValues("main.error.thread.crashed",
+    private static final Config TEXT_ERROR_THREAD_CRASH = Cfg.register("main.error.thread.crashed",
             "An needed thread crashed");
 
     /**
      * mainframe
      */
-    private static final Frame MAIN = new Frame("XY.GpsMid");
+    private static final JFrame MAIN = new JFrame("XY.Gomps");
+    private static final JPanel CONTENT = new JPanel();
     static {
-        MAIN.setSize(600, 450);
+        MAIN.setSize(200, 150);
         MAIN.setBackground(Color.BLACK);
-        MAIN.setVisible(true);
+        MAIN.setLayout(new BorderLayout());
+        MAIN.getContentPane().add(CONTENT);
+        CONTENT.setBackground(Color.GRAY);
     }
     // Threads to control
-    private static Thread db;
-    private static Thread paint;
+    public static Thread db;
+    public static Thread paint;
 
     /**
      * main infrastructure stacking
@@ -105,7 +121,7 @@ public class Example {
         }
     });
     // 2. get ouput module
-    final AwtListener listener = new AwtListener(perspective, MAIN.getGraphics(), MAIN.getGraphicsConfiguration());
+    final AwtListener listener = new AwtListener(perspective, CONTENT.getGraphics(), CONTENT.getGraphicsConfiguration());
     // 3. init data bridge for perspective
     private final PriorityDataReceiver dataReceiver = new PriorityDataReceiver(perspective, new CreateLayersCallback() {
         public Collection createLayerSet(final int prio) {
@@ -126,32 +142,21 @@ public class Example {
     private double moveX = 0;
     private double moveY = 0;
     private double moveZ = 0;
-    private final double acceleration = 1.1;
-    private final double limit = 18;
     private double[] dragStart = null;
 
     public Example() {
-        if (Config.getInteger(CONF_DATA_PROVIDER).intValue() == CONF_DATAPROVIDER_TILES) {
-            try {
-                data = new HSQLDriver();
-            } catch (final SQLException e1) {
-                e1.printStackTrace();
-                System.exit(1);
-            }
-        } else {
-            data = new TileDriver();
-            data.setListener(listener);
-        }
+        addDataProvider();
         listener.addLayer(new StatLayer(perspective)); // add stats
-        Log.comment(CONF_TEXT_INIT_DATAPROVIDER, new Object[] { data });
         MAIN.addWindowListener(new WindowAdapter() {
             public void windowClosing(final WindowEvent e) {
                 System.exit(0);
             }
         });
+        canvasAdapter.size(CONTENT.getWidth(), CONTENT.getHeight());
         MAIN.addComponentListener(new ComponentAdapter() {
             public void componentResized(final ComponentEvent e) {
-                canvasAdapter.size(MAIN.getWidth(), MAIN.getHeight());
+                listener.setDisplayBuffer(CONTENT.getGraphics());
+                canvasAdapter.size(CONTENT.getWidth(), CONTENT.getHeight());
             }
         });
         MAIN.addMouseListener(new MouseAdapter() {
@@ -180,7 +185,7 @@ public class Example {
                 if (dragStart != null && System.currentTimeMillis() > lastMove) {
                     listener.moveBuffer((int) (dragStart[2] - e.getX()), (int) (dragStart[3] - e.getY()) * -1);
                     dragStart = new double[] { e.getX(), e.getY(), dragStart[2], dragStart[3] };
-                    lastMove = System.currentTimeMillis() + 100;
+                    lastMove = System.currentTimeMillis() + Cfg.integer(CONF_EVENT_LOOPGAP).intValue();
                 }
             }
 
@@ -220,12 +225,16 @@ public class Example {
                 if (System.currentTimeMillis() < lastMove) {
                     return;
                 }
+                final double acceleration = Cfg.doublet(CONF_EVENT_ACCEL).doubleValue();
+                final double limit = Cfg.doublet(CONF_EVENT_ACCEL_LIMIT).doubleValue();
                 switch (e.getKeyCode()) {
                 case KeyEvent.VK_LEFT:
                     if (moveX == 0) {
                         moveX = -1;
                     } else if (Math.abs(moveX) < limit) {
                         moveX = moveX * acceleration;
+                    } else {
+                        moveX = limit * -1;
                     }
                     break;
                 case KeyEvent.VK_RIGHT:
@@ -233,6 +242,8 @@ public class Example {
                         moveX = 1;
                     } else if (moveX < limit) {
                         moveX = moveX * acceleration;
+                    } else {
+                        moveX = limit;
                     }
                     break;
                 case KeyEvent.VK_UP:
@@ -240,6 +251,8 @@ public class Example {
                         moveY = 1;
                     } else if (Math.abs(moveY) < limit) {
                         moveY = moveY * acceleration;
+                    } else {
+                        moveY = limit * 1;
                     }
                     break;
                 case KeyEvent.VK_DOWN:
@@ -247,6 +260,8 @@ public class Example {
                         moveY = -1;
                     } else if (moveY < limit) {
                         moveY = moveY * acceleration;
+                    } else {
+                        moveX = limit * -1;
                     }
                     break;
                 case KeyEvent.VK_PLUS:
@@ -258,22 +273,43 @@ public class Example {
                     moveZ = -1;
                     break;
                 }
-                lastMove = System.currentTimeMillis() + 40;
+                lastMove = System.currentTimeMillis() + Cfg.integer(CONF_EVENT_LOOPGAP).intValue();
             }
         });
-        Log.comment(CONF_TEXT_INIT_EVENT_LISTENERS);
+        Log.comment(TEXT_INIT_EVENT_LISTENERS);
+    }
+
+    /**
+     * reinits or adds an dataprovider
+     */
+    public void addDataProvider() {
+        if (Cfg.integer(CONF_DATA_PROVIDER).intValue() == CONF_DATAPROVIDER_DB) {
+            try {
+                data = new HSQLDriver();
+            } catch (final SQLException e1) {
+                e1.printStackTrace();
+                System.exit(1);
+            }
+        } else {
+            data = new TileDriver();
+            data.setListener(listener);
+        }
+        Log.comment(TEXT_INIT_DATAPROVIDER, new Object[] { data });
     }
 
     public static void main(final String[] args) {
         // configuration setup
-        Config.addDefaultRetrievers(args);
+        Cfg.addDefaultRetrievers(args);
         try {
-            Config.addRetriever(new TextPropertyRetriever("net/xy/gps/render/priorities.properties"));
-            new TagConfiguration("net/xy/gps/data/tag/tags.conf.xml", new TagFactory());
+            Cfg.addRetriever(new TextPropertyRetriever("net/xy/gps/render/priorities.properties"));
+            Cfg.addRetriever(new TextPropertyRetriever("net/xy/gps/messages.properties"));
+            loadTagConfig();
         } catch (final Exception e) {
             throw new RuntimeException(e);
         }
-        Log.comment(CONF_TEXT_INIT_CONFIGURATION);
+        Log.comment(TEXT_INIT_CONFIGURATION);
+        MAIN.setJMenuBar(new ConfigMenuBar());
+        MAIN.setVisible(true);
 
         final Example main = new Example();
 
@@ -290,14 +326,14 @@ public class Example {
                         // main.dataReceiver.clearLayers(); ineffective
                         main.data.get(main.perspective.getViewPort(), main.dataReceiver);
                     }
-                    Utils.sleep(200);
+                    Utils.sleep(Cfg.integer(CONF_EVENT_LOOPGAP).intValue() * 5);
                 }
             }
         }, "DataCollector");
         db.setDaemon(true);
         db.setPriority(Thread.MIN_PRIORITY);
         db.start();
-        Log.comment(CONF_TEXT_INIT_DATATHREAD);
+        Log.comment(TEXT_INIT_DATATHREAD);
 
         // init painting thread
         paint = new Thread(new Runnable() {
@@ -308,7 +344,7 @@ public class Example {
                         main.perspective.update(); // call for update
                     }
                     if (!((Boolean) ThreadLocal.get()).booleanValue()) {
-                        Utils.sleep(40);
+                        Utils.sleep(Cfg.integer(CONF_EVENT_LOOPGAP).intValue());
                     }
                 }
             }
@@ -316,11 +352,11 @@ public class Example {
         paint.setDaemon(true);
         paint.setPriority(Thread.MIN_PRIORITY);
         paint.start();
-        Log.comment(CONF_TEXT_INIT_PAINTTHREAD);
+        Log.comment(TEXT_INIT_PAINTTHREAD);
 
         while (true) {
             if (!db.isAlive() || !paint.isAlive()) {
-                Log.fattal(CONF_TEXT_ERROR_THREAD_CRASH);
+                Log.fattal(TEXT_ERROR_THREAD_CRASH);
                 System.exit(1);
             }
             if (main.moveX != 0 || main.moveY != 0 || main.moveZ != 0) {
@@ -331,7 +367,19 @@ public class Example {
                 main.canvasAdapter.move(main.moveX, main.moveY, main.moveZ);
                 MAIN.setTitle(main.perspective.getViewPort().toString());
             }
-            Utils.sleep(40);
+            Utils.sleep(Cfg.integer(CONF_EVENT_LOOPGAP).intValue());
+        }
+    }
+
+    /**
+     * loads or reloads the tag style configuration
+     */
+    public static void loadTagConfig() {
+        try {
+            TagFactory.flush();
+            new TagConfiguration(Cfg.string(TagConfiguration.CONF_TAG_CONF), new TagFactory());
+        } catch (final Exception e) {
+            throw new RuntimeException(e);
         }
     }
 }

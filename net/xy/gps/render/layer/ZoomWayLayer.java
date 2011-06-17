@@ -12,6 +12,8 @@
  */
 package net.xy.gps.render.layer;
 
+import net.xy.codebasel.config.Cfg;
+import net.xy.codebasel.config.Cfg.Config;
 import net.xy.gps.data.IDataObject;
 import net.xy.gps.data.WayData;
 import net.xy.gps.render.ICanvas;
@@ -24,9 +26,9 @@ import net.xy.gps.render.ICanvas;
  */
 public class ZoomWayLayer extends WayLayer {
     /**
-     * must fit at least of 10 in height or width to be displayed
+     * configuration
      */
-    public int mustFit = 5;
+    public static final Config CONF_AREA_MUSTFIT = Cfg.register("layer.ways.zoom.mustfit", Integer.valueOf(5));
     /**
      * reference to draw surface
      */
@@ -58,6 +60,7 @@ public class ZoomWayLayer extends WayLayer {
     }
 
     public void update() {
+        final int mustFit = Cfg.integer(CONF_AREA_MUSTFIT).intValue();
         tenWidth = canvas.getViewPort().dimension.width / 100 * mustFit;
         tenHeight = canvas.getViewPort().dimension.height / 100 * mustFit;
         super.update();

@@ -1,12 +1,12 @@
 /**
  * This file is part of XY.Gomps, Copyright 2011 (C) Xyan Kruse, Xyan@gmx.net, Xyan.kilu.de
- * 
+ *
  * XY.Gomps is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
- * 
+ *
  * XY.Gomps is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License along with XY.Gomps. If not, see
  * <http://www.gnu.org/licenses/>.
  */
@@ -16,8 +16,9 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 import net.xy.codebasel.Log;
-import net.xy.codebasel.config.Config;
-import net.xy.codebasel.config.Config.ConfigKey;
+import net.xy.codebasel.ThreadLocal;
+import net.xy.codebasel.config.Cfg;
+import net.xy.codebasel.config.Cfg.Config;
 import net.xy.gps.data.driver.HSQLDriver;
 import net.xy.gps.data.driver.TileDriver;
 
@@ -31,18 +32,19 @@ public class TileCreator {
     /**
      * configuration & messages
      */
-    private static ConfigKey CONF_CREATOR_START = Config.registerValues("creator.start", "Starting...");
-    private static ConfigKey CONF_CREATOR_END = Config.registerValues("creator.end", "Done");
+    private static Config TEXT_CREATOR_START = Cfg.register("creator.start", "Starting...");
+    private static Config TEXT_CREATOR_END = Cfg.register("creator.end", "Done");
 
     /**
      * @param args
      */
     public static void main(final String[] args) {
+        ThreadLocal.set(Boolean.FALSE);
         final TileDriver p = new TileDriver();
         try {
-            Log.trace(CONF_CREATOR_START);
+            Log.trace(TEXT_CREATOR_START);
             p.writeTiles(new HSQLDriver());
-            Log.trace(CONF_CREATOR_END);
+            Log.trace(TEXT_CREATOR_END);
         } catch (final IOException e) {
             e.printStackTrace();
         } catch (final SQLException e) {

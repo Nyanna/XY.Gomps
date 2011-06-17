@@ -36,8 +36,7 @@ public class Rectangle implements Serializable {
     /**
      * serialization constructor
      */
-    public Rectangle() {
-    }
+    public Rectangle() {}
 
     /**
      * default constructor
@@ -61,17 +60,15 @@ public class Rectangle implements Serializable {
      * @return
      */
     public Point getPoint(final float x, final float y) {
+        // TODO [2] overthink pixel and width mapping model
         throw new UnsupportedOperationException("Not implemented");
     }
 
-    
     public String toString() {
-        return new StringBuilder().append("Start: ").append(origin.lat).append(" by ")
-                .append(origin.lon).append(" with ").append(dimension.width).append(" x ")
-                .append(dimension.height).toString();
+        return new StringBuilder().append("Start: ").append(origin.lat).append(" by ").append(origin.lon)
+                .append(" with ").append(dimension.width).append(" x ").append(dimension.height).toString();
     }
 
-    
     public boolean equals(final Object obj) {
         if (obj == this) {
             return true;

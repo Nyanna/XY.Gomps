@@ -25,21 +25,29 @@ import net.xy.gps.render.draw.DrawArea;
  * 
  */
 public class AreaLayer extends SimpleLayer {
-  public void addObject(final IDataObject object) {
-    if (IDataObject.DATA_AREA == object.getType()) {
-      super.addObject(object);
-    }
-  }
+    private static final Float[] EMPTYD = new Float[0];
 
-  protected void draw(final IDataObject robj) {
-    final WayData way = (WayData) robj;
-    Integer[] color = BASERGB;
-    boolean fill = true;
-    if (robj.getTags() != null && robj.getTags().length > 0) {
-      final Tag tag = TagFactory.getTag(robj.getTags()[0]);
-      color = tag.style.color;
-      fill = tag.style.fill.booleanValue();
+    public void addObject(final IDataObject object) {
+        if (IDataObject.DATA_AREA == object.getType()) {
+            super.addObject(object);
+        }
     }
-    listener.draw(new DrawArea(way.path, color, fill));
-  }
+
+    protected void draw(final IDataObject robj) {
+        final WayData way = (WayData) robj;
+        Integer[] color = BASERGB;
+        boolean fill = true;
+        Float[] border = EMPTYD;
+        Integer[] borderColor = BASERGB;
+        String image = null;
+        if (robj.getTags() != null && robj.getTags().length > 0) {
+            final Tag tag = TagFactory.getTag(robj.getTags()[0]);
+            color = tag.style.color;
+            fill = tag.style.fill.booleanValue();
+            border = tag.style.border;
+            borderColor = tag.style.borderColor;
+            image = tag.style.image;
+        }
+        listener.draw(new DrawArea(way.path, color, fill, border, borderColor, image));
+    }
 }

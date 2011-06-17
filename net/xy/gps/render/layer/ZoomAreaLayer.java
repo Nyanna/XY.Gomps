@@ -12,6 +12,8 @@
  */
 package net.xy.gps.render.layer;
 
+import net.xy.codebasel.config.Cfg;
+import net.xy.codebasel.config.Cfg.Config;
 import net.xy.gps.data.IDataObject;
 import net.xy.gps.data.WayData;
 import net.xy.gps.render.ICanvas;
@@ -23,43 +25,44 @@ import net.xy.gps.render.ICanvas;
  * 
  */
 public class ZoomAreaLayer extends AreaLayer {
-  /**
-   * must fit at least of 10 in height or width to be displayed
-   */
-  public int mustFit = 7;
-  /**
-   * reference to draw surface
-   */
-  private final ICanvas canvas;
-  /**
-   * limits recalculated on update call
-   */
-  private double tenWidth = 0.2;
-  private double tenHeight = 0.2;
+    /**
+     * configuration
+     */
+    public static final Config CONF_AREA_MUSTFIT = Cfg.register("layer.areas.zoom.mustfit", Integer.valueOf(7));
+    /**
+     * reference to draw surface
+     */
+    private final ICanvas canvas;
+    /**
+     * limits recalculated on update call
+     */
+    private double tenWidth = 0.2;
+    private double tenHeight = 0.2;
 
-  /**
-   * default constructor
-   * 
-   * @param canvas
-   */
-  public ZoomAreaLayer(final ICanvas canvas) {
-    this.canvas = canvas;
-    update();
-  }
-
-  protected void draw(final IDataObject robj) {
-    if (listener == null) {
-      return;
+    /**
+     * default constructor
+     * 
+     * @param canvas
+     */
+    public ZoomAreaLayer(final ICanvas canvas) {
+        this.canvas = canvas;
+        update();
     }
-    final WayData way = (WayData) robj;
-    if (way.bounds.dimension.width > tenWidth || way.bounds.dimension.height > tenHeight) {
-      super.draw(robj);
-    }
-  }
 
-  public void update() {
-    tenWidth = canvas.getViewPort().dimension.width / 100 * mustFit;
-    tenHeight = canvas.getViewPort().dimension.height / 100 * mustFit;
-    super.update();
-  }
+    protected void draw(final IDataObject robj) {
+        if (listener == null) {
+            return;
+        }
+        final WayData way = (WayData) robj;
+        if (way.bounds.dimension.width > tenWidth || way.bounds.dimension.height > tenHeight) {
+            super.draw(robj);
+        }
+    }
+
+    public void update() {
+        final int mustFit = Cfg.integer(CONF_AREA_MUSTFIT).intValue();
+        tenWidth = canvas.getViewPort().dimension.width / 100 * mustFit;
+        tenHeight = canvas.getViewPort().dimension.height / 100 * mustFit;
+        super.update();
+    }
 }

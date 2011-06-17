@@ -27,8 +27,8 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import net.xy.codebasel.Log;
-import net.xy.codebasel.config.Config;
-import net.xy.codebasel.config.Config.ConfigKey;
+import net.xy.codebasel.config.Cfg;
+import net.xy.codebasel.config.Cfg.Config;
 import net.xy.gps.data.IDataObject;
 import net.xy.gps.data.PoiData;
 import net.xy.gps.data.tag.TagFactory;
@@ -43,8 +43,8 @@ public class StaxOsmParser {
     /**
      * messages
      */
-    private static final ConfigKey CONF_WRONG_SORTED = Config
-            .registerValues(
+    private static final Config TEXT_WRONG_SORTED = Cfg
+            .register(
                     "osm.xml.praser.error.sorting",
                     " Found node after begin of ways. Streamline back reference not possible. XML has to be ordered nodes > ways > relations");
 
@@ -57,8 +57,8 @@ public class StaxOsmParser {
      * @throws XMLStreamException
      * @throws IOException
      */
-    public static void parse(final File inputXml, final IObjectListener listener)
-            throws XMLStreamException, FactoryConfigurationError, IOException {
+    public static void parse(final File inputXml, final IObjectListener listener) throws XMLStreamException,
+            FactoryConfigurationError, IOException {
         final FileInputStream fin = new FileInputStream(inputXml);
         final long total = inputXml.length();
         final XMLStreamReader reader = XMLInputFactory.newInstance().createXMLStreamReader(fin);
@@ -72,7 +72,7 @@ public class StaxOsmParser {
                 Log.log(Log.LVL_TRACE, "Parse node...", null);
                 nodeCount++;
                 if (phase2_ways) {
-                    throw new IllegalStateException(Config.getString(CONF_WRONG_SORTED));
+                    throw new IllegalStateException(Cfg.string(TEXT_WRONG_SORTED));
                 }
                 final Integer id = Integer.valueOf(reader.getAttributeValue(null, "id"));
                 final Double lat = Double.valueOf(reader.getAttributeValue(null, "lat"));
@@ -83,15 +83,14 @@ public class StaxOsmParser {
                     doNext(reader);
                     if (reader.getEventType() == XMLStreamConstants.START_ELEMENT
                             && "tag".equals(reader.getName().getLocalPart())) {
-                        tags.put(reader.getAttributeValue(null, "k"),
-                                reader.getAttributeValue(null, "v"));
+                        tags.put(reader.getAttributeValue(null, "k"), reader.getAttributeValue(null, "v"));
                     } else if (reader.getEventType() == XMLStreamConstants.END_ELEMENT
                             && "node".equals(reader.getName().getLocalPart())) {
                         break;
                     }
                 }
-                listener.put(new PoiData(lat.doubleValue(), lon.doubleValue(), id.intValue(),
-                        TagFactory.getTags(IDataObject.DATA_POINT, tags)));
+                listener.put(new PoiData(lat.doubleValue(), lon.doubleValue(), id.intValue(), TagFactory.getTags(
+                        IDataObject.DATA_POINT, tags)));
                 Log.log(Log.LVL_TRACE, "Parse node done", null);
             } else
             // <way...
@@ -108,8 +107,7 @@ public class StaxOsmParser {
                     doNext(reader);
                     if (reader.getEventType() == XMLStreamConstants.START_ELEMENT
                             && "tag".equals(reader.getName().getLocalPart())) {
-                        tags.put(reader.getAttributeValue(null, "k"),
-                                reader.getAttributeValue(null, "v"));
+                        tags.put(reader.getAttributeValue(null, "k"), reader.getAttributeValue(null, "v"));
                     } else if (reader.getEventType() == XMLStreamConstants.START_ELEMENT
                             && "nd".equals(reader.getName().getLocalPart())) {
                         nodes.add(Integer.valueOf(reader.getAttributeValue(null, "ref")));
@@ -120,8 +118,7 @@ public class StaxOsmParser {
                 }
                 // check for area firts and alst node are the same
                 if (nodes.size() > 1
-                        && ((Integer) nodes.get(0)).intValue() == ((Integer) nodes
-                                .get(nodes.size() - 1)).intValue()) {
+                        && ((Integer) nodes.get(0)).intValue() == ((Integer) nodes.get(nodes.size() - 1)).intValue()) {
                     dataType = IDataObject.DATA_AREA;
                 }
                 listener.putWay(id.intValue(), nodes, TagFactory.getTags(dataType, tags));

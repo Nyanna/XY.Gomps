@@ -19,7 +19,7 @@ import java.util.Map;
 import net.xy.codebasel.ThreadLocal;
 import net.xy.gps.data.IDataObject;
 import net.xy.gps.render.ILayer;
-import net.xy.gps.render.perspective.ActionListener;
+import net.xy.gps.render.perspective.IActionListener;
 
 /**
  * an simple layer
@@ -40,7 +40,7 @@ public abstract class SimpleLayer implements ILayer {
     /**
      * draw event listener
      */
-    protected ActionListener listener = null;
+    protected IActionListener listener = null;
     /**
      * base width
      */
@@ -75,7 +75,7 @@ public abstract class SimpleLayer implements ILayer {
      */
     abstract protected void draw(final IDataObject robj);
 
-    public void setListener(final ActionListener listener) {
+    public void setListener(final IActionListener listener) {
         this.listener = listener;
     }
 

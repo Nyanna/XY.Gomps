@@ -12,6 +12,8 @@
  */
 package net.xy.gps.render.layer;
 
+import net.xy.codebasel.config.Cfg;
+import net.xy.codebasel.config.Cfg.Config;
 import net.xy.gps.data.IDataObject;
 import net.xy.gps.render.ICanvas;
 
@@ -22,50 +24,50 @@ import net.xy.gps.render.ICanvas;
  * 
  */
 public class ZoomNodeLayer extends NodeLayer {
-  /**
-   * hides all nodes if count is above this percentage amount 100px > 20 = 20
-   * nodes
-   */
-  public int maxAmount = 75;
-  /**
-   * reference to draw surface
-   */
-  private final ICanvas canvas;
-  /**
-   * stores the limit recalculated on each update
-   */
-  private int limit = 100;
+    /**
+     * configuration
+     */
+    // hides all nodes if count is above this percentage amount 100px > 20 = 20
+    public static final Config CONF_NODES_LIMIT = Cfg.register("layer.nodes.zoom.limitPer", Integer.valueOf(75));
+    /**
+     * reference to draw surface
+     */
+    private final ICanvas canvas;
+    /**
+     * stores the limit recalculated on each update
+     */
+    private int limit = 100;
 
-  /**
-   * default constructor
-   * 
-   * @param canvas
-   */
-  public ZoomNodeLayer(final ICanvas canvas) {
-    this.canvas = canvas;
-    update();
-  }
+    /**
+     * default constructor
+     * 
+     * @param canvas
+     */
+    public ZoomNodeLayer(final ICanvas canvas) {
+        this.canvas = canvas;
+        update();
+    }
 
-  public void addObject(final IDataObject object) {
-    if (objs.size() < limit) {
-      super.addObject(object);
+    public void addObject(final IDataObject object) {
+        if (objs.size() < limit) {
+            super.addObject(object);
+        }
     }
-  }
 
-  protected void draw(final IDataObject robj) {
-    if (listener == null) {
-      return;
+    protected void draw(final IDataObject robj) {
+        if (listener == null) {
+            return;
+        }
+        if (objs.size() < limit) {
+            super.draw(robj);
+        }
     }
-    if (objs.size() < limit) {
-      super.draw(robj);
-    }
-  }
 
-  public void update() {
-    limit = (int) Math
-        .round((Math.min(canvas.getSize().width, canvas.getSize().height) / 100 * maxAmount));
-    if (objs.size() < limit) {
-      super.update();
+    public void update() {
+        limit = (int) Math.round((Math.min(canvas.getSize().width, canvas.getSize().height) / 100 * Cfg.integer(
+                CONF_NODES_LIMIT).intValue()));
+        if (objs.size() < limit) {
+            super.update();
+        }
     }
-  }
 }

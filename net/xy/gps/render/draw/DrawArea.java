@@ -34,17 +34,46 @@ public class DrawArea implements IDrawAction {
      * should this area be filles with an color
      */
     public final boolean fill;
+    /**
+     * saves border alghorythm
+     */
+    public final Float[] border;
+    /**
+     * border or default color
+     */
+    public final Integer[] borderColor;
+    /**
+     * image resource name
+     */
+    public final String image;
+
+    /**
+     * default without borders
+     * 
+     * @param path
+     * @param color
+     * @param fill
+     */
+    public DrawArea(final Double[][] path, final Integer[] color, final boolean fill) {
+        this(path, color, fill, null, null, null);
+    }
 
     /**
      * default constructor
      * 
      * @param path
      * @param fill
+     * @param borderColor
+     * @param border
      */
-    public DrawArea(final Double[][] path, final Integer[] color, final boolean fill) {
+    public DrawArea(final Double[][] path, final Integer[] color, final boolean fill, final Float[] border,
+            final Integer[] borderColor, final String image) {
         this.path = path;
         this.color = color;
         this.fill = fill;
+        this.border = border != null ? border : new Float[0];
+        this.borderColor = borderColor != null ? borderColor : color;
+        this.image = image;
     }
 
     public int getType() {

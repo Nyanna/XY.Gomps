@@ -17,6 +17,7 @@ import net.xy.gps.render.ICanvas;
 import net.xy.gps.type.Dimension;
 
 /**
+ * Deprecated
  * layer accepts only ways and hides them if they are below a certain boundary
  * 
  * @author Xyan

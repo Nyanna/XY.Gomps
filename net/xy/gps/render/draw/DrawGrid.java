@@ -32,14 +32,21 @@ public class DrawGrid implements IDrawAction {
      * stores path color
      */
     public final Integer[] color;
+    /**
+     * saves border alghorythm
+     */
+    public final Float[] border;
 
     /**
      * default constructor
      * 
+     * @param border
+     * 
      * @param path
      */
-    public DrawGrid(final Integer[] color) {
+    public DrawGrid(final Integer[] color, final Float[] border) {
         this.color = color;
+        this.border = border;
     }
 
     /**

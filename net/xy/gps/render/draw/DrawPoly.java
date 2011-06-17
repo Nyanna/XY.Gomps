@@ -21,32 +21,46 @@ import net.xy.gps.render.IDrawAction;
  * 
  */
 public class DrawPoly implements IDrawAction {
-  /**
-   * int[] coordinate pairs
-   * int[] x,y position in lat and lon
-   */
-  public final Double[][] path;
-  /**
-   * stores path color
-   */
-  public final Integer[] color;
-  /**
-   * stores the width of the line
-   */
-  public final Double width;
+    /**
+     * int[] coordinate pairs
+     * int[] x,y position in lat and lon
+     */
+    public final Double[][] path;
+    /**
+     * stores path color
+     */
+    public final Integer[] color;
+    /**
+     * stores the width of the line
+     */
+    public final Double width;
+    /**
+     * dash matrix to draw an dashed line
+     */
+    public final Float[] dashes;
 
-  /**
-   * default constructor
-   * 
-   * @param path
-   */
-  public DrawPoly(final Double[][] path, final Integer[] color, final Double width) {
-    this.path = path;
-    this.color = color;
-    this.width = width;
-  }
+    /**
+     * default constructor, without dashes
+     * 
+     * @param path
+     */
+    public DrawPoly(final Double[][] path, final Integer[] color, final Double width) {
+        this(path, color, width, null);
+    }
 
-  public int getType() {
-    return IDrawAction.ACTION_WAY;
-  }
+    /**
+     * default constructor
+     * 
+     * @param path
+     */
+    public DrawPoly(final Double[][] path, final Integer[] color, final Double width, final Float[] dashes) {
+        this.path = path;
+        this.color = color;
+        this.width = width;
+        this.dashes = dashes != null ? dashes : new Float[0];
+    }
+
+    public int getType() {
+        return IDrawAction.ACTION_WAY;
+    }
 }

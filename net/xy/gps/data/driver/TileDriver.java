@@ -29,16 +29,15 @@ import java.util.Map.Entry;
 import net.xy.codebasel.Log;
 import net.xy.codebasel.ObjectArray;
 import net.xy.codebasel.ThreadLocal;
-import net.xy.codebasel.config.Config;
-import net.xy.codebasel.config.Config.ConfigKey;
+import net.xy.codebasel.config.Cfg;
+import net.xy.codebasel.config.Cfg.Config;
 import net.xy.codebasel.serialization.SerialContext;
 import net.xy.gps.data.IDataObject;
 import net.xy.gps.data.IDataProvider;
 import net.xy.gps.data.PoiData;
 import net.xy.gps.data.WayData;
 import net.xy.gps.render.draw.DrawArea;
-import net.xy.gps.render.draw.DrawPoint;
-import net.xy.gps.render.perspective.ActionListener;
+import net.xy.gps.render.perspective.IActionListener;
 import net.xy.gps.type.Dimension;
 import net.xy.gps.type.Point;
 import net.xy.gps.type.Rectangle;
@@ -50,24 +49,30 @@ import net.xy.gps.type.Rectangle;
  * 
  */
 public class TileDriver implements IDataProvider {
-    private static final ConfigKey CONF_TEXT_ERROR_TILE_READ = Config.registerValues("driver.error.tile.read",
-            "Error on reading tile");
-    private static final ConfigKey CONF_TEXT_TILE_READ_STAT = Config.registerValues("driver.tile.read.stat",
+    /**
+     * configuration
+     */
+    public static final Config CONF_TILE_SIZE_LAT = Cfg.register("tiles.size.lat", Double.valueOf(0.01));
+    public static final Config CONF_TILE_SIZE_LON = Cfg.register("tiles.size.lon", Double.valueOf(0.01));
+    public static final Config CONF_MEM_LIMIT = Cfg.register("tiles.memory.has2bfree", Integer.valueOf(10));
+    public static final Config CONF_DRAW_DEBUGBOUND = Cfg.register("tiles.proccess.debugDraw", Boolean.FALSE);
+    public static final Config CONF_TILE_BASE = Cfg.register("tiles.basedir", "osm/tiles/");
+    /**
+     * messages
+     */
+    private static final Config TEXT_ERROR_TILE_READ = Cfg.register("driver.error.tile.read", "Error on reading tile");
+    private static final Config TEXT_TILE_READ_STAT = Cfg.register("driver.tile.read.stat",
             "Loading tile tok milliseconds, dataset");
-    private static final ConfigKey CONF_TEXT_TILE_READ_CACHE_OLD = Config.registerValues("driver.tile.read.cache.old",
+    private static final Config TEXT_TILE_READ_CACHE_OLD = Cfg.register("driver.tile.read.cache.old",
             "Read tile from old cache");
-    private static final ConfigKey CONF_TEXT_TILE_REMOVED = Config.registerValues("driver.tile.removed",
-            "Removed unused tile");
-    private static final ConfigKey CONF_TEXT_ERROR_TILE_WRITE = Config.registerValues("driver.error.tile.write",
-            "Write tile");
-    private static final ConfigKey CONF_TEXT_ABORT_RUN = Config.registerValues("driver.obsolete.return",
-            "Run is outdated returning");
-    private static final ConfigKey CONF_TEXT_ABORT_REVOKE = Config.registerValues("driver.obsolete.revoke",
+    private static final Config TEXT_TILE_REMOVED = Cfg.register("driver.tile.removed", "Removed unused tile");
+    private static final Config TEXT_ERROR_TILE_WRITE = Cfg.register("driver.error.tile.write", "Write tile");
+    private static final Config TEXT_ABORT_RUN = Cfg.register("driver.obsolete.return", "Run is outdated returning");
+    private static final Config TEXT_ABORT_REVOKE = Cfg.register("driver.obsolete.revoke",
             "Run is outdated returning from revoking");
-    private static final ConfigKey CONF_TEXT_CALL_RANGE = Config.registerValues("driver.tile.call",
-            "Following tile range is requested");
-    private static final ConfigKey CONF_TEXT_ABORT_MEMORY = Config.registerValues("driver.error.memory",
-            "Abort tile loading less than 10% memory free");
+    private static final Config TEXT_CALL_RANGE = Cfg.register("driver.tile.call", "Following tile range is requested");
+    private static final Config TEXT_ABORT_MEMORY = Cfg.register("driver.error.memory",
+            "Abort tile loading less than n% memory free");
     /**
      * holds the serilization context
      */
@@ -76,24 +81,24 @@ public class TileDriver implements IDataProvider {
     /**
      * for progress display
      */
-    private ActionListener drawListener = null;
+    private IActionListener drawListener = null;
     // if tile loaded from cache
     private static final Integer[] cacheLoaded = new Integer[] { Integer.valueOf(0), Integer.valueOf(255),
-            Integer.valueOf(0), Integer.valueOf(15) };
+            Integer.valueOf(0), Integer.valueOf(100) };
     // if loaded from file
     private static final Integer[] fileLoaded = new Integer[] { Integer.valueOf(0), Integer.valueOf(0),
-            Integer.valueOf(255), Integer.valueOf(15) };
+            Integer.valueOf(255), Integer.valueOf(100) };
     // error on loading tile
     private static final Integer[] errorLoaded = new Integer[] { Integer.valueOf(255), Integer.valueOf(0),
             Integer.valueOf(0), Integer.valueOf(150) };
     /**
      * tile size lat
      */
-    private static final double LAT_SIZE = 0.005;
+    private static final double LAT_SIZE = Cfg.doublet(CONF_TILE_SIZE_LAT).doubleValue();
     /**
      * tile size lon
      */
-    private static final double LON_SIZE = 0.005;
+    private static final double LON_SIZE = Cfg.doublet(CONF_TILE_SIZE_LON).doubleValue();
     /**
      * reduces loading time of already cached tiles, refreshes each request
      */
@@ -104,8 +109,7 @@ public class TileDriver implements IDataProvider {
         final int lonTilStart = (int) Math.floor(bounds.origin.lon / LON_SIZE);
         final int latTilRange = (int) Math.ceil(bounds.dimension.width / LAT_SIZE) + 1;
         final int lonTilRange = (int) Math.ceil(bounds.dimension.height / LON_SIZE) + 1;
-        drawListener.draw(new DrawPoint(bounds.origin.lat, bounds.origin.lon, cacheLoaded));
-        Log.comment(CONF_TEXT_CALL_RANGE,
+        Log.comment(TEXT_CALL_RANGE,
                 new Object[] { Integer.valueOf(latTilStart), Integer.valueOf(lonTilStart), Integer.valueOf(latTilRange),
                         Integer.valueOf(lonTilRange) });
 
@@ -115,7 +119,7 @@ public class TileDriver implements IDataProvider {
         // final List loadKeyList = new ArrayList();
         while (spiral.hasNext()) { // copy over used tiles
             if (((Boolean) ThreadLocal.get()).booleanValue()) {
-                Log.comment(CONF_TEXT_ABORT_REVOKE);
+                Log.comment(TEXT_ABORT_REVOKE);
                 return;
             }
             final Integer[] coords = (Integer[]) spiral.next();
@@ -129,7 +133,7 @@ public class TileDriver implements IDataProvider {
 
         for (final Iterator i = tileCache.entrySet().iterator(); i.hasNext();) {
             if (((Boolean) ThreadLocal.get()).booleanValue()) {
-                Log.comment(CONF_TEXT_ABORT_REVOKE);
+                Log.comment(TEXT_ABORT_REVOKE);
                 return;
             }
             final Entry entry = (Entry) i.next();
@@ -139,7 +143,7 @@ public class TileDriver implements IDataProvider {
                 i.remove();
                 receiver.revoke(((BasicTile) entry.getValue()).objects); // revoke
                                                                          // old
-                Log.comment(CONF_TEXT_TILE_REMOVED, new Object[] { point });
+                Log.comment(TEXT_TILE_REMOVED, new Object[] { point });
             }
         }
         System.gc();
@@ -148,7 +152,7 @@ public class TileDriver implements IDataProvider {
         spiral = new SpiralStrategy(latTilStart, lonTilStart, latTilRange, lonTilRange);
         while (spiral.hasNext()) {
             if (((Boolean) ThreadLocal.get()).booleanValue()) {
-                Log.comment(CONF_TEXT_ABORT_RUN);
+                Log.comment(TEXT_ABORT_RUN);
                 return;
             }
             final Integer[] coords = (Integer[]) spiral.next();
@@ -158,7 +162,7 @@ public class TileDriver implements IDataProvider {
             BasicTile tile = (BasicTile) tileCache.get(tileKey);
             if (tile == null) {
                 if (!isFreeMem()) {
-                    Log.warning(CONF_TEXT_ABORT_MEMORY);
+                    Log.warning(TEXT_ABORT_MEMORY);
                     return;
                 }
                 final long start = System.currentTimeMillis();
@@ -170,7 +174,7 @@ public class TileDriver implements IDataProvider {
                     drawState(lattlon[0], lattlon[1], fileLoaded);
                     tileCache.put(tileKey, tile);
                     Log.comment(
-                            CONF_TEXT_TILE_READ_STAT,
+                            TEXT_TILE_READ_STAT,
                             new Object[] { tileKey, Long.valueOf((System.currentTimeMillis() - start)),
                                     Integer.valueOf(tile.objects.length) });
                     receiver.accept(tile.objects);
@@ -178,16 +182,16 @@ public class TileDriver implements IDataProvider {
                     drawState(lattlon[0], lattlon[1], errorLoaded);
                 } catch (final OutOfMemoryError e) {
                     System.gc();
-                    Log.warning(CONF_TEXT_ABORT_MEMORY);
+                    Log.warning(TEXT_ABORT_MEMORY);
                     return;
                 } catch (final Exception e) {
                     drawState(lattlon[0], lattlon[1], errorLoaded);
-                    Log.warning(CONF_TEXT_ERROR_TILE_READ, new Object[] { tileKey });
+                    Log.warning(TEXT_ERROR_TILE_READ, new Object[] { tileKey });
                     extendedLog(e);
                 }
             } else { // from old cache
                 drawState(lattlon[0], lattlon[1], cacheLoaded);
-                Log.comment(CONF_TEXT_TILE_READ_CACHE_OLD, new Object[] { tileKey });
+                Log.comment(TEXT_TILE_READ_CACHE_OLD, new Object[] { tileKey });
                 receiver.accept(tile.objects);
             }
         }
@@ -214,8 +218,8 @@ public class TileDriver implements IDataProvider {
      * @param lonTil
      */
     private void drawState(final int latTil, final int lonTil, final Integer[] color) {
-        final ActionListener listener = drawListener;
-        if (listener != null) {
+        final IActionListener listener = drawListener;
+        if (listener != null && Cfg.booleant(CONF_DRAW_DEBUGBOUND).booleanValue()) {
             listener.draw(new DrawArea(new Double[][] {
                     { Double.valueOf(latTil * LAT_SIZE), Double.valueOf(lonTil * LON_SIZE) },
                     { Double.valueOf(latTil * LAT_SIZE), Double.valueOf(lonTil * LON_SIZE + LON_SIZE) },
@@ -233,7 +237,7 @@ public class TileDriver implements IDataProvider {
         final long freeMem = Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory()
                 + Runtime.getRuntime().freeMemory();
         final long restPer = freeMem / (Runtime.getRuntime().maxMemory() / 100);
-        if (restPer > 10) {
+        if (restPer > Cfg.integer(CONF_MEM_LIMIT).intValue()) {
             return true;
         }
         return false;
@@ -266,7 +270,7 @@ public class TileDriver implements IDataProvider {
                 final Rectangle bounds = new Rectangle(new Point(latt * LAT_SIZE, lont * LON_SIZE), new Dimension(LAT_SIZE,
                         LON_SIZE));
                 final String tilename = getTileName(latt, lont);
-                Log.notice(CONF_TEXT_ERROR_TILE_WRITE, new Object[] { tilename });
+                Log.notice(TEXT_ERROR_TILE_WRITE, new Object[] { tilename });
                 final ObjectArray objects = new ObjectArray();
                 provider.get(bounds, new IDataReceiver() {
 
@@ -281,7 +285,7 @@ public class TileDriver implements IDataProvider {
                     }
                 });
                 if (objects.getLastIndex() > -1) { // if data available
-                    new File("osm/tiles/" + latt + "/").mkdirs();
+                    new File(Cfg.string(CONF_TILE_BASE) + latt + "/").mkdirs();
                     final File ofile = new File(tilename);
                     final DataOutputStream out = new DataOutputStream(new FileOutputStream(ofile));
                     final IDataObject[] objs = new IDataObject[objects.get().length];
@@ -300,10 +304,10 @@ public class TileDriver implements IDataProvider {
      * @return
      */
     private String getTileName(final int latt, final int lont) {
-        return "osm/tiles/" + latt + "/" + lont + ".tile";
+        return Cfg.string(CONF_TILE_BASE) + latt + "/" + lont + ".tile";
     }
 
-    public void setListener(final ActionListener listener) {
+    public void setListener(final IActionListener listener) {
         drawListener = listener;
     }
 

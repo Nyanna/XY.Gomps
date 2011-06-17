@@ -19,8 +19,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import net.xy.codebasel.Log;
-import net.xy.codebasel.config.Config;
-import net.xy.codebasel.config.Config.ConfigKey;
+import net.xy.codebasel.ThreadLocal;
+import net.xy.codebasel.config.Cfg;
+import net.xy.codebasel.config.Cfg.Config;
 import net.xy.gps.data.IDataObject;
 import net.xy.gps.data.WayData;
 import net.xy.gps.data.tag.Tag;
@@ -40,7 +41,11 @@ public class TagWayLayer extends WayLayer {
     /**
      * message config
      */
-    private static final ConfigKey CONF_TEXT_GRID_CREATED = Config.registerValues("layer.create.grid", "An grid was formed");
+    private static final Config TEXT_GRID_CREATED = Cfg.register("layer.create.grid", "An grid was formed");
+    /**
+     * cofiguration
+     */
+    public static final Config CONF_DRAW_GRIDS = Cfg.register("layer.ways.drawGrids", Boolean.FALSE);
     /**
      * reference to draw surface
      */
@@ -111,10 +116,16 @@ public class TagWayLayer extends WayLayer {
         final Dimension dim = canvas.getViewPort().dimension;
         bound = Math.max(dim.width, dim.height);
         check();
-        if (containsTagless || show) {
-            super.update();
-        }
         if (show) {
+            synchronized (objs) {
+                for (final Iterator iterator = objs.values().iterator(); iterator.hasNext();) {
+                    final IDataObject obj = (IDataObject) iterator.next();
+                    if (((Boolean) ThreadLocal.get()).booleanValue()) {
+                        return;
+                    }
+                    draw(obj);
+                }
+            }
             synchronized (taggedObjects) {
                 for (final Iterator i1 = taggedObjects.entrySet().iterator(); i1.hasNext();) {
                     final Entry entry = (Entry) i1.next();
@@ -122,20 +133,22 @@ public class TagWayLayer extends WayLayer {
                     final Tag tag = TagFactory.getTag((Integer) entry.getKey());
                     if (tag.zoom > 0 && tag.zoom > bound || //
                             tag.zoom <= 0 && defaultZoom > bound) {
-                        if (objMap.size() == 1 || true) {
-                            draw((IDataObject) objMap.values().iterator().next());
+                        if (objMap.size() <= 3 || !Cfg.booleant(CONF_DRAW_GRIDS).booleanValue()) {
+                            for (final Iterator ii = objMap.values().iterator(); ii.hasNext();) {
+                                draw((IDataObject) ii.next());
+                            }
                         } else {
                             DrawGrid grid = null;
                             for (final Iterator i = objMap.values().iterator(); i.hasNext();) {
                                 final WayData way = (WayData) i.next();
                                 if (grid == null) {
-                                    grid = new DrawGrid(tag.style.color);
+                                    grid = new DrawGrid(tag.style.color, tag.style.border);
                                 }
                                 grid.addPath(new Path(way.path,
                                         Double.valueOf(tag.style.width.intValue() > 0 ? tag.style.width.intValue() : 5)));
                             }
                             if (grid != null) {
-                                Log.comment(CONF_TEXT_GRID_CREATED, new Object[] { grid });
+                                Log.comment(TEXT_GRID_CREATED, new Object[] { grid });
                                 listener.draw(grid);
                             }
                         }
@@ -149,6 +162,10 @@ public class TagWayLayer extends WayLayer {
      * check show conditions
      */
     private void check() {
+        if (containsTagless) {
+            show = true;
+            return;
+        }
         show = false;
         synchronized (tagIndex) {
             for (final Iterator i = tagIndex.iterator(); i.hasNext();) {

@@ -27,6 +27,20 @@ public class DrawPoint implements IDrawAction {
      * point color
      */
     public final Integer[] color;
+    /**
+     * image resource name
+     */
+    public final String image;
+
+    /**
+     * default constructor without image
+     * 
+     * @param lat
+     * @param lon
+     */
+    public DrawPoint(final double lat, final double lon, final Integer[] color) {
+        this(lat, lon, color, null);
+    }
 
     /**
      * default constructor
@@ -34,10 +48,11 @@ public class DrawPoint implements IDrawAction {
      * @param lat
      * @param lon
      */
-    public DrawPoint(final double lat, final double lon, final Integer[] color) {
+    public DrawPoint(final double lat, final double lon, final Integer[] color, final String image) {
         this.lat = lat;
         this.lon = lon;
         this.color = color;
+        this.image = image;
     }
 
     public int getType() {

@@ -12,7 +12,7 @@
  */
 package net.xy.gps.data;
 
-import net.xy.gps.render.perspective.ActionListener;
+import net.xy.gps.render.perspective.IActionListener;
 import net.xy.gps.type.Rectangle;
 
 /**
@@ -36,7 +36,7 @@ public interface IDataProvider {
      * 
      * @param listener
      */
-    public void setListener(final ActionListener listener);
+    public void setListener(final IActionListener listener);
 
     /**
      * data listener

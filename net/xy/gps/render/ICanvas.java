@@ -12,7 +12,7 @@
  */
 package net.xy.gps.render;
 
-import net.xy.gps.render.perspective.ActionListener;
+import net.xy.gps.render.perspective.IActionListener;
 import net.xy.gps.type.Dimension;
 import net.xy.gps.type.Rectangle;
 
@@ -120,7 +120,7 @@ public interface ICanvas {
    * 
    * @param listener
    */
-  public void setListener(final ActionListener listener);
+  public void setListener(final IActionListener listener);
 
   /**
    * if the perspective altered since last update

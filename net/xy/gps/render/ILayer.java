@@ -13,7 +13,7 @@
 package net.xy.gps.render;
 
 import net.xy.gps.data.IDataObject;
-import net.xy.gps.render.perspective.ActionListener;
+import net.xy.gps.render.perspective.IActionListener;
 
 /**
  * specifies typicl layer management functionalities
@@ -48,7 +48,7 @@ public interface ILayer {
      * @param view
      * @return
      */
-    public void setListener(final ActionListener listener);
+    public void setListener(final IActionListener listener);
 
     /**
      * causes an redraw of all actual data
