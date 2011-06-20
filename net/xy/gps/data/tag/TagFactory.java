@@ -13,6 +13,7 @@
 package net.xy.gps.data.tag;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -59,6 +60,8 @@ public class TagFactory implements ITagListener {
                 }
             }
         }
+        Collections.sort(res);
+        Collections.reverse(res);
         return (Integer[]) res.toArray(new Integer[res.size()]);
     }
 

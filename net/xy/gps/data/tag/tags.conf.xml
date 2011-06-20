@@ -37,61 +37,61 @@
 			<tagmatch key="highway" value="primary_link" type="way"/>
 		</conditions>
 	</tag>
-	<tag name="Highway/Secondary" priority="18" zoom="0.1" enabled="true">
+	<tag name="Highway/Secondary" priority="18" zoom="0.2" enabled="true">
 		<style fill="false" color="253,191,111,200" width="5"/>
 		<conditions>
 			<tagmatch key="highway" value="secondary" type="way"/>
 		</conditions>
 	</tag>
-	<tag name="Highway/Secondary-Link" priority="18" zoom="0.1" enabled="true">
+	<tag name="Highway/Secondary-Link" priority="18" zoom="0.2" enabled="true">
 		<style fill="false" color="253,191,111,200" width="5"/>
 		<conditions>
 			<tagmatch key="highway" value="secondary_link" type="way"/>
 		</conditions>
 	</tag>
-	<tag name="Highway/Tertiary" priority="19" zoom="0.05" enabled="true">
+	<tag name="Highway/Tertiary" priority="19" zoom="0.1" enabled="true">
 		<style fill="false" color="252,250,116,200" width="4"/>
 		<conditions>
 			<tagmatch key="highway" value="tertiary" type="way"/>
 		</conditions>
 	</tag>
-	<tag name="Highway/Residential" priority="20" zoom="0.03" enabled="true">
+	<tag name="Highway/Residential" priority="20" zoom="0.05" enabled="true">
 		<style fill="false" color="201,201,201,200" width="4"/>
 		<conditions>
 			<tagmatch key="highway" value="residential" type="way"/>
 		</conditions>
 	</tag>
-	<tag name="Highway/Unclassified" priority="21" zoom="0.03" enabled="true">
+	<tag name="Highway/Unclassified" priority="21" zoom="0.05" enabled="true">
 		<style fill="false" color="219,219,219,200" width="3"/>
 		<conditions>
 			<tagmatch key="highway" value="unclassified" type="way"/>
 		</conditions>
 	</tag>
-	<tag name="Highway/Road" priority="18" zoom="0.3" enabled="true">
+	<tag name="Highway/Road" priority="18" zoom="0.5" enabled="true">
 		<style fill="false" color="219,219,219,200" width="4"/>
 		<conditions>
 			<tagmatch key="highway" value="road" type="way"/>
 		</conditions>
 	</tag>
-	<tag name="Highway/Living" priority="22" zoom="0.01" enabled="true">
+	<tag name="Highway/Living" priority="22" zoom="0.03" enabled="true">
 		<style fill="false" color="248,198,193,200" width="3"/>
 		<conditions>
 			<tagmatch key="highway" value="living_street" type="way"/>
 		</conditions>
 	</tag>
-	<tag name="Highway/Service" priority="22" zoom="0.01" enabled="true">
+	<tag name="Highway/Service" priority="22" zoom="0.03" enabled="true">
 		<style fill="false" color="219,219,219,200" width="3"/>
 		<conditions>
 			<tagmatch key="highway" value="service" type="way"/>
 		</conditions>
 	</tag>
-	<tag name="Highway/Track" priority="22" zoom="0.01" enabled="true">
+	<tag name="Highway/Track" priority="22" zoom="0.03" enabled="true">
 		<style fill="false" color="219,219,219,200" width="3"/>
 		<conditions>
 			<tagmatch key="highway" value="track" type="way"/>
 		</conditions>
 	</tag>
-	<tag name="Highway/Pedestrian" priority="22" zoom="0.009" enabled="true">
+	<tag name="Highway/Pedestrian" priority="22" zoom="0.02" enabled="true">
 		<style fill="true" color="203,238,173,200" width="3"/>
 		<conditions>
 			<orCondition>
@@ -100,13 +100,13 @@
 			</orCondition>
 		</conditions>
 	</tag>
-	<tag name="Highway/Raceway" priority="50" zoom="0.1" enabled="false">
+	<tag name="Highway/Raceway" priority="50" zoom="0.3" enabled="false">
 		<style fill="false" color="0,0,0,200" width="20"/>
 		<conditions>
 			<tagmatch key="highway" value="raceway" type="way"/>
 		</conditions>
 	</tag>
-	<tag name="Highway/Services" priority="22" zoom="0.3" enabled="true">
+	<tag name="Highway/Services" priority="22" zoom="0.5" enabled="true">
 		<style fill="false" color="206,182,182,200" width="10"/>
 		<conditions>
 			<orCondition>
@@ -115,43 +115,43 @@
 			</orCondition>
 		</conditions>
 	</tag>
-	<tag name="Highway/Bus" priority="50" zoom="0.3" enabled="true">
+	<tag name="Highway/Bus" priority="50" zoom="0.5" enabled="true">
 		<style fill="false" color="247,81,103,200" width="4"/>
 		<conditions>
 			<tagmatch key="highway" value="bus_guideway" type="way"/>
 		</conditions>
 	</tag>
-	<tag name="Path/Way" priority="23" zoom="0.009" enabled="true">
-		<style fill="false" color="167,198,154,200" width="3"/>
+	<tag name="Path/Way" priority="23" zoom="0.02" enabled="true">
+		<style fill="false" color="167,198,154,200" width="2"/>
 		<conditions>
 			<tagmatch key="highway" value="path" type="way"/>
 		</conditions>
 	</tag>
-	<tag name="Path/Cycleway" priority="23" zoom="0.009" enabled="true">
+	<tag name="Path/Cycleway" priority="23" zoom="0.02" enabled="true">
 		<style fill="false" color="167,198,154,200" width="2"/>
 		<conditions>
 			<tagmatch key="highway" value="cycleway" type="way"/>
 		</conditions>
 	</tag>
-	<tag name="Path/Footway" priority="23" zoom="0.009" enabled="true">
+	<tag name="Path/Footway" priority="23" zoom="0.02" enabled="true">
 		<style fill="false" color="224,182,124,200" width="2"/>
 		<conditions>
 			<tagmatch key="highway" value="footway" type="way"/>
 		</conditions>
 	</tag>
-	<tag name="Path/Bridleway" priority="23" zoom="0.009" enabled="true">
+	<tag name="Path/Bridleway" priority="23" zoom="0.01" enabled="true">
 		<style fill="false" color="112,185,113,200" width="3"/>
 		<conditions>
 			<tagmatch key="highway" value="bridleway" type="way"/>
 		</conditions>
 	</tag>
-	<tag name="Path/Byway" priority="22" zoom="0.1" enabled="true">
+	<tag name="Path/Byway" priority="22" zoom="0.3" enabled="true">
 		<style fill="false" color="250,222,109,200" width="3" border="2,1,2"/>
 		<conditions>
 			<tagmatch key="highway" value="byway" type="way"/>
 		</conditions>
 	</tag>
-	<tag name="Path/Steps" priority="23" zoom="0.009" enabled="true">
+	<tag name="Path/Steps" priority="23" zoom="0.01" enabled="true">
 		<style fill="false" color="191,187,167,200" width="2" border="1,1,1"/>
 		<conditions>
 			<tagmatch key="highway" value="steps" type="way"/>
@@ -187,7 +187,7 @@
 			<tagmatch key="highway" value="crossing" type="point"/>
 		</conditions>
 	</tag>
-	<tag name="Intersection/Roundabout" priority="17" zoom="0.1" enabled="true">
+	<tag name="Intersection/Roundabout" priority="17" zoom="0.3" enabled="true">
 		<style fill="true" color="252,250,116,200" width="7"/>
 		<conditions>
 			<orCondition>
@@ -582,7 +582,7 @@
 	<!-- Aeroway -->
 
 	<!-- Nature -->
-	<tag name="Natural/Bay" priority="40" zoom="0.5" enabled="true">
+	<tag name="Natural/Bay" priority="9" zoom="0.5" enabled="true">
 		<style fill="true" color="213,227,239,200"/>
 		<conditions>
 			<orCondition>
@@ -591,7 +591,7 @@
 			</orCondition>
 		</conditions>
 	</tag>
-	<tag name="Natural/Beach" priority="30" zoom="0.5" enabled="true">
+	<tag name="Natural/Beach" priority="9" zoom="0.5" enabled="true">
 		<style fill="true" color="238,204,85,200"/>
 		<conditions>
 			<orCondition>
@@ -625,7 +625,7 @@
 			<tagmatch key="natural" value="coastline" type="way"/>
 		</conditions>
 	</tag>
-	<tag name="Natural/Fell" priority="35" zoom="0.3" enabled="true">
+	<tag name="Natural/Fell" priority="9" zoom="0.3" enabled="true">
 		<style fill="true" color="221,212,236,200"/>
 		<conditions>
 			<orCondition>
@@ -634,7 +634,7 @@
 			</orCondition>
 		</conditions>
 	</tag>
-	<tag name="Natural/Glacier" priority="35" zoom="0.1" enabled="true">
+	<tag name="Natural/Glacier" priority="9" zoom="0.1" enabled="true">
 		<style fill="true" color="221,236,236,200"/>
 		<conditions>
 			<orCondition>
@@ -643,7 +643,7 @@
 			</orCondition>
 		</conditions>
 	</tag>
-	<tag name="Natural/Heath" priority="35" zoom="0.5" enabled="true">
+	<tag name="Natural/Heath" priority="9" zoom="0.5" enabled="true">
 		<style fill="true" color="255,255,192,200"/>
 		<conditions>
 			<orCondition>
@@ -652,7 +652,7 @@
 			</orCondition>
 		</conditions>
 	</tag>
-	<tag name="Natural/Land" priority="30" zoom="0.5" enabled="true">
+	<tag name="Natural/Land" priority="3" zoom="0.5" enabled="true">
 		<style fill="true" color="255,255,255,200"/>
 		<conditions>
 			<orCondition>
@@ -661,7 +661,7 @@
 			</orCondition>
 		</conditions>
 	</tag>
-	<tag name="Natural/Marsh" priority="31" zoom="0.5" enabled="true">
+	<tag name="Natural/Marsh" priority="9" zoom="0.5" enabled="true">
 		<style fill="true" color="13,137,255,200"/>
 		<conditions>
 			<orCondition>
@@ -672,7 +672,7 @@
 			</orCondition>
 		</conditions>
 	</tag>
-	<tag name="Natural/Mud" priority="35" zoom="0.5" enabled="true">
+	<tag name="Natural/Mud" priority="8" zoom="0.5" enabled="true">
 		<style fill="true" color="229,219,208,200"/>
 		<conditions>
 			<orCondition>
@@ -687,7 +687,7 @@
 			<tagmatch key="natural" value="peak" type="point"/>
 		</conditions>
 	</tag>
-	<tag name="Natural/Sand" priority="35" zoom="0.5" enabled="true">
+	<tag name="Natural/Sand" priority="8" zoom="0.5" enabled="true">
 		<style fill="true" color="255,255,214,200"/>
 		<conditions>
 			<orCondition>
@@ -696,7 +696,7 @@
 			</orCondition>
 		</conditions>
 	</tag>
-	<tag name="Natural/Scree" priority="35" zoom="0.5" enabled="true">
+	<tag name="Natural/Scree" priority="8" zoom="0.5" enabled="true">
 		<style fill="true" color="167,167,168,200"/>
 		<conditions>
 			<orCondition>
@@ -705,7 +705,7 @@
 			</orCondition>
 		</conditions>
 	</tag>
-	<tag name="Natural/Scrub" priority="35" zoom="0.5" enabled="true">
+	<tag name="Natural/Scrub" priority="8" zoom="0.5" enabled="true">
 		<style fill="true" color="114,191,129,200"/>
 		<conditions>
 			<orCondition>
@@ -738,7 +738,7 @@
 			<tagmatch key="natural" value="volcano" type="point"/>
 		</conditions>
 	</tag>
-	<tag name="Natural/Water" priority="30" zoom="1" enabled="true">
+	<tag name="Natural/Water" priority="3" zoom="1" enabled="true">
 		<style fill="true" color="181,214,241,200"/>
 		<conditions>
 			<orCondition>
@@ -747,7 +747,7 @@
 			</orCondition>
 		</conditions>
 	</tag>
-	<tag name="Natural/Wood" priority="30" zoom="0.5" enabled="true">
+	<tag name="Natural/Wood" priority="7" zoom="0.5" enabled="true">
 		<style fill="true" color="114,191,129,200"/>
 		<conditions>
 			<orCondition>
